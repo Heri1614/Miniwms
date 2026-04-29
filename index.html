@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8 Base Estable</title>
+<title>MiniWMS AR · V8.1 Limpieza Visual</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -22,70 +22,71 @@ body{
   color:#e0eaff;
 }
 
+/* Barra superior reducida */
 #topbar{
   position:fixed;
   top:0;
   left:0;
   right:0;
   z-index:90;
-  min-height:56px;
-  padding:10px 12px;
-  background:linear-gradient(180deg,rgba(5,10,22,.97),rgba(5,10,22,.72));
-  border-bottom:1px solid rgba(79,195,247,.30);
-  backdrop-filter:blur(10px);
+  min-height:38px;
+  padding:6px 10px;
+  background:linear-gradient(180deg,rgba(5,10,22,.90),rgba(5,10,22,.50));
+  border-bottom:1px solid rgba(79,195,247,.22);
+  backdrop-filter:blur(8px);
 }
 
 #topbar h1{
-  font-size:15px;
+  font-size:13px;
   color:#4fc3f7;
   font-weight:800;
-  letter-spacing:.4px;
+  letter-spacing:.3px;
   line-height:1.1;
 }
 
 #topbar p{
-  margin-top:2px;
-  font-size:10.5px;
-  color:#7fb3e0;
+  display:none;
 }
 
+/* Status pequeño para no tapar cámara */
 #status{
   position:fixed;
-  top:68px;
+  top:46px;
   left:50%;
   transform:translateX(-50%);
   z-index:95;
-  min-width:245px;
+  min-width:170px;
   text-align:center;
-  padding:8px 16px;
-  border-radius:24px;
-  background:rgba(80,15,15,.94);
+  padding:5px 12px;
+  border-radius:18px;
+  background:rgba(80,15,15,.82);
   border:1px solid #e74c3c;
   color:#ffb3b3;
-  font-size:12.5px;
-  box-shadow:0 8px 24px rgba(0,0,0,.42);
+  font-size:11px;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
   backdrop-filter:blur(8px);
 }
 
 #status.ok{
-  background:rgba(7,88,48,.94);
+  background:rgba(7,88,48,.84);
   border-color:#2ecc71;
   color:#55efc4;
 }
 
+/* Panel más compacto */
 #controls{
   position:fixed;
-  left:12px;
-  right:12px;
-  bottom:12px;
+  left:10px;
+  right:10px;
+  bottom:10px;
   z-index:100;
-  padding:12px;
-  border-radius:18px;
-  background:rgba(5,10,22,.92);
+  padding:10px;
+  border-radius:16px;
+  background:rgba(5,10,22,.90);
   border:1px solid #1b3660;
-  box-shadow:0 14px 36px rgba(0,0,0,.50);
+  box-shadow:0 12px 30px rgba(0,0,0,.48);
   backdrop-filter:blur(10px);
-  max-height:74vh;
+  max-height:64vh;
   overflow-y:auto;
 }
 
@@ -93,6 +94,7 @@ body{
   display:none;
 }
 
+/* Botón controles más pequeño */
 #showControls{
   position:fixed;
   left:50%;
@@ -100,14 +102,14 @@ body{
   transform:translateX(-50%);
   z-index:110;
   display:none;
-  padding:10px 18px;
+  padding:9px 18px;
   border-radius:30px;
   border:1px solid #4fc3f7;
-  background:rgba(5,10,22,.94);
+  background:rgba(5,10,22,.88);
   color:#4fc3f7;
   font-size:13px;
   font-weight:800;
-  box-shadow:0 8px 22px rgba(0,0,0,.45);
+  box-shadow:0 8px 22px rgba(0,0,0,.42);
 }
 
 #showControls.show{
@@ -117,25 +119,25 @@ body{
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:10px;
-  margin-bottom:10px;
+  gap:8px;
+  margin-bottom:8px;
 }
 
 .mini-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  margin-bottom:10px;
+  gap:7px;
+  margin-bottom:8px;
 }
 
 button{
   width:100%;
-  padding:12px 8px;
-  border-radius:12px;
+  padding:10px 7px;
+  border-radius:10px;
   border:1px solid #1b3660;
-  background:rgba(18,38,75,.72);
+  background:rgba(18,38,75,.68);
   color:#a8d4ff;
-  font-size:12.5px;
+  font-size:12px;
   font-weight:700;
 }
 
@@ -179,12 +181,12 @@ button.red{
   flex:1 1 auto;
   width:100%;
   min-width:0;
-  padding:12px 10px;
-  border-radius:12px;
+  padding:10px 9px;
+  border-radius:10px;
   border:1px solid #1b3660;
-  background:rgba(18,38,75,.62);
+  background:rgba(18,38,75,.58);
   color:#e0eaff;
-  font-size:13px;
+  font-size:12px;
   outline:none;
   direction:ltr;
   unicode-bidi:plaintext;
@@ -197,20 +199,20 @@ button.red{
 }
 
 .searchRow button{
-  flex:0 0 92px;
-  width:92px;
-  min-width:92px;
+  flex:0 0 88px;
+  width:88px;
+  min-width:88px;
 }
 
 #info{
-  margin-top:10px;
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(79,195,247,.22);
-  background:rgba(12,25,55,.66);
+  margin-top:8px;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid rgba(79,195,247,.20);
+  background:rgba(12,25,55,.58);
   color:#c7dcf5;
-  font-size:12.2px;
-  line-height:1.55;
+  font-size:11.5px;
+  line-height:1.45;
 }
 
 #info b{
@@ -218,16 +220,16 @@ button.red{
 }
 
 #hint{
-  margin-top:7px;
+  margin-top:6px;
   color:#7fb3e0;
-  font-size:10px;
-  line-height:1.55;
+  font-size:9.5px;
+  line-height:1.4;
 }
 
 @media(max-width:420px){
   .mini-grid button{
-    padding:10px 4px;
-    font-size:12px;
+    padding:9px 4px;
+    font-size:11.5px;
   }
 }
 </style>
@@ -236,11 +238,11 @@ button.red{
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8 Base Estable</h1>
+  <h1>🏭 MiniWMS AR · V8.1</h1>
   <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y búsqueda</p>
 </div>
 
-<div id="status">Buscando marcador HIRO...</div>
+<div id="status">Buscando HIRO...</div>
 
 <div id="controls">
   <div class="grid">
@@ -283,7 +285,7 @@ button.red{
     Prueba: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.
   </div>
 
-  <div style="margin-top:10px">
+  <div style="margin-top:8px">
     <button onclick="hideControls()">Ocultar controles</button>
   </div>
 </div>
@@ -981,13 +983,13 @@ window.addEventListener('load', () => {
   const status = document.getElementById('status');
 
   marker.addEventListener('markerFound', () => {
-    status.textContent = 'Marcador detectado · MiniWMS AR activo';
+    status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8 Base Estable activa. Esta es la base funcional recuperada.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.1 Limpieza Visual activa.');
   });
 
   marker.addEventListener('markerLost', () => {
-    status.textContent = 'Buscando marcador HIRO...';
+    status.textContent = 'Buscando HIRO...';
     status.classList.remove('ok');
   });
 });
