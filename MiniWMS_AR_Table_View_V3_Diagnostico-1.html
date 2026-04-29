@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MiniWMS AR Table View · V3 Diagnóstico</title>
+
+<!-- 
+  MiniWMS AR Table View
+  Versión demo: visor AR ligero con marcador HIRO.
+  Requiere internet para cargar A-Frame y AR.js desde CDN.
+  Uso recomendado: Android + Chrome.
+-->
+
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  overflow:hidden;
+  font-family:Segoe UI,Roboto,Arial,sans-serif;
+  background:#02040a;
+  color:#e0eaff;
+}
+#ui{
+  position:fixed;
+  left:0;
+  right:0;
+  top:0;
+  z-index:20;
+  pointer-events:none;
+}
+.topbar{
+  min-height:54px;
+  padding:10px 12px;
+  background:linear-gradient(180deg,rgba(5,10,22,.96),rgba(5,10,22,.70));
+  border-bottom:1px solid rgba(79,195,247,.25);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  pointer-events:auto;
+}
+.title{
+  flex:1;
+  min-width:0;
+}
+.title h1{
+  font-size:15px;
+  line-height:1.1;
+  color:#4fc3f7;
+  letter-spacing:.6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.title p{
+  color:#7fb3e0;
+  font-size:10.5px;
+  margin-top:2px;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 8px;
+  border:1px solid rgba(79,195,247,.35);
+  border-radius:999px;
+  background:rgba(8,18,44,.75);
+  color:#a8d4ff;
+  font-size:10.5px;
+  white-space:nowrap;
+}
+.dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#e74c3c;
+  box-shadow:0 0 8px #e74c3c;
+}
+.dot.ok{
+  background:#2ecc71;
+  box-shadow:0 0 8px #2ecc71;
+}
+.panel{
+  position:fixed;
+  left:10px;
+  right:10px;
+  bottom:10px;
+  z-index:22;
+  pointer-events:auto;
+  background:rgba(5,10,22,.88);
+  border:1px solid rgba(79,195,247,.22);
+  border-radius:16px;
+  padding:10px;
+  backdrop-filter:blur(12px);
+  box-shadow:0 12px 40px rgba(0,0,0,.45);
+}
+.controls{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px;
+  margin-bottom:8px;
+}
+button{
+  border:1px solid #1b3660;
+  background:rgba(18,38,75,.70);
+  color:#a8d4ff;
+  border-radius:10px;
+  padding:9px 8px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+button:active{transform:scale(.97)}
+button.primary{
+  border-color:#4fc3f7;
+  color:#4fc3f7;
+}
+button.green{
+  border-color:#2ecc71;
+  color:#55efc4;
+}
+button.warn{
+  border-color:#f39c12;
+  color:#f5b041;
+}
+.searchrow{
+  display:flex;
+  gap:7px;
+}
+input{
+  flex:1;
+  min-width:0;
+  border:1px solid #1b3660;
+  background:rgba(18,38,75,.65);
+  color:#e0eaff;
+  border-radius:10px;
+  padding:10px 11px;
+  font-size:13px;
+  outline:none;
+}
+input:focus{border-color:#4fc3f7}
+#infoCard{
+  margin-top:8px;
+  padding:9px 10px;
+  border:1px solid rgba(79,195,247,.20);
+  border-radius:12px;
+  background:rgba(12,25,55,.56);
+  color:#c7dcf5;
+  font-size:12px;
+  line-height:1.55;
+}
+#infoCard b{color:#4fc3f7}
+#startOverlay{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  background:
+    radial-gradient(circle at 20% 10%,rgba(79,195,247,.16),transparent 30%),
+    radial-gradient(circle at 85% 75%,rgba(46,204,113,.12),transparent 35%),
+    linear-gradient(135deg,#050a16 0%,#0b1833 55%,#02040a 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.card{
+  width:420px;
+  max-width:96vw;
+  border:1px solid rgba(79,195,247,.28);
+  background:linear-gradient(145deg,rgba(8,17,30,.97),rgba(13,28,58,.95));
+  border-radius:22px;
+  padding:24px;
+  box-shadow:0 24px 80px rgba(0,0,0,.65);
+}
+.card h2{
+  color:#4fc3f7;
+  font-size:20px;
+  margin-bottom:8px;
+}
+.card p{
+  color:#a8c8e8;
+  font-size:13px;
+  line-height:1.6;
+  margin-bottom:12px;
+}
+.steps{
+  background:rgba(5,12,35,.62);
+  border:1px solid #1b3660;
+  border-radius:14px;
+  padding:12px 14px;
+  margin:12px 0;
+  color:#c7dcf5;
+  font-size:12.5px;
+  line-height:1.8;
+}
+.steps b{color:#55efc4}
+.card .actions{
+  display:flex;
+  gap:8px;
+  margin-top:14px;
+}
+.card .actions button{
+  flex:1;
+  padding:12px 10px;
+  font-size:13px;
+}
+.small{
+  color:#7fb3e0!important;
+  font-size:11px!important;
+  margin-top:10px!important;
+}
+#markerLost{
+  position:fixed;
+  top:64px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:21;
+  background:rgba(80,10,10,.90);
+  border:1px solid #e74c3c;
+  color:#ffb3b3;
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:12px;
+  display:none;
+  pointer-events:none;
+}
+#markerLost.show{display:block}
+#tapHint{
+  position:fixed;
+  top:102px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:21;
+  background:rgba(5,12,35,.85);
+  border:1px solid rgba(79,195,247,.35);
+  color:#a8d4ff;
+  padding:6px 14px;
+  border-radius:999px;
+  font-size:11px;
+  display:none;
+  pointer-events:none;
+}
+#tapHint.show{display:block}
+a-scene{
+  width:100vw!important;
+  height:100vh!important;
+}
+.calibrate{
+  grid-template-columns:repeat(4,1fr);
+  margin-top:-2px;
+}
+.calibrate button{
+  padding:7px 6px;
+  font-size:11px;
+  border-color:#9b59b6;
+  color:#d7b4ea;
+}
+
+.calibration-sliders{
+  display:grid;
+  grid-template-columns:48px 1fr 58px;
+  gap:8px;
+  align-items:center;
+  margin:8px 0;
+  color:#d7b4ea;
+  font-size:11px;
+}
+.calibration-sliders input[type=range]{
+  padding:0;
+  height:26px;
+}
+.calibration-sliders span{
+  font-family:Consolas,monospace;
+  color:#fff;
+  text-align:right;
+}
+.mini-note{
+  margin-top:6px;
+  color:#7fb3e0;
+  font-size:10.5px;
+  line-height:1.35;
+}
+body.min-ui .panel{
+  transform:translateY(calc(100% - 54px));
+}
+body.min-ui .panel::before{
+  content:"▲ Controles";
+  display:block;
+  color:#4fc3f7;
+  text-align:center;
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+@media(max-width:420px){
+  .controls{grid-template-columns:repeat(2,1fr)}
+  .calibrate{grid-template-columns:repeat(4,1fr)}
+  .topbar{align-items:flex-start}
+  .pill{font-size:10px}
+}
+</style>
+</head>
+
+<body>
+<div id="startOverlay">
+  <div class="card">
+    <h2>MiniWMS AR Table View</h2>
+    <p>
+      Esta es una maqueta AR calibrada: el aro azul/amarillo debe quedar justo encima del marcador y el almacén aparece como holograma de mesa.
+    </p>
+    <div class="steps">
+      <div><b>1.</b> Imprime o muestra en otra pantalla el marcador HIRO.</div>
+      <div><b>2.</b> Abre este archivo en Android/Chrome.</div>
+      <div><b>3.</b> Da permiso a la cámara.</div>
+      <div><b>4.</b> Apunta al marcador desde arriba.</div>
+    </div>
+    <div class="actions">
+      <button class="primary" onclick="startAR()">Iniciar AR</button>
+      <button class="warn" onclick="openMarkerHelp()">Marcador</button>
+    </div>
+    <p class="small">
+      Nota: requiere internet para cargar las librerías de realidad aumentada. Esta versión no modifica inventario real.
+    </p>
+  </div>
+</div>
+
+<div id="ui">
+  <div class="topbar">
+    <div class="title">
+      <h1>🏭 MiniWMS AR · Calibración</h1>
+      <p>Maqueta ligera conectable al MiniWMS maestro</p>
+    </div>
+    <div class="pill"><span id="markerDot" class="dot"></span><span id="markerText">Buscando marcador</span></div>
+  </div>
+</div>
+
+<div id="markerLost" class="show">Apunta al marcador HIRO para desplegar el almacén</div>
+<div id="tapHint">Toca un rack o busca un NP para resaltarlo</div>
+
+<div class="panel">
+  <div class="controls">
+    <button onclick="scaleModel(1.15)">＋ Acercar</button>
+    <button onclick="scaleModel(0.87)">－ Alejar</button>
+    <button onclick="rotateModel(-15)">↶ Girar</button>
+    <button onclick="rotateModel(15)">↷ Girar</button>
+    <button class="primary" onclick="resetView()">Reset</button>
+    <button class="green" onclick="toggleHeatmap()">Ocupación</button>
+    <button class="warn" onclick="highlightPickingRoute()">Ruta Pick</button>
+    <button onclick="clearHighlight()">Limpiar</button>
+  </div>
+  <div class="controls calibrate">
+    <button onclick="moveModel(0,-0.35)">↑ Mesa</button>
+    <button onclick="moveModel(-0.35,0)">← Izq</button>
+    <button onclick="moveModel(0.35,0)">Der →</button>
+    <button onclick="moveModel(0,0.35)">↓ Mesa</button>
+  </div>
+  <div class="calibration-sliders">
+    <label>X</label>
+    <input id="calX" type="range" min="-3" max="3" step="0.05" value="0" oninput="setOffsetFromSliders()">
+    <span id="calXVal">0.00</span>
+    <label>Z</label>
+    <input id="calZ" type="range" min="-3" max="3" step="0.05" value="0" oninput="setOffsetFromSliders()">
+    <span id="calZVal">0.00</span>
+  </div>
+  <div class="controls calibrate">
+    <button onclick="toggleWarehouseOnly()">Solo Pin</button>
+    <button onclick="toggleMiniUI()">Ocultar UI</button>
+    <button onclick="centerPreset('right')">Preset Der</button>
+    <button onclick="centerPreset('left')">Preset Izq</button>
+  </div>
+  <div class="mini-note">Primero centra el pin azul/amarillo sobre el HIRO. Cuando el pin quede en el marcador, activa el almacén y ajusta escala.</div>
+
+  <div class="searchrow">
+    <input id="searchInput" placeholder="Buscar NP, lote o rack. Ej: 98A1850, RC07, L-2403" onkeydown="if(event.key==='Enter')searchItem()">
+    <button class="primary" onclick="searchItem()">Buscar</button>
+  </div>
+
+  <div id="infoCard">
+    <b>Estado:</b> esperando marcador. Al detectar el marcador, la maqueta aparecerá sobre la mesa.
+  </div>
+</div>
+
+<a-scene
+  embedded
+  renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true; colorManagement: true;"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+  arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false; detectionMode: mono;">
+
+  <a-assets>
+    <a-mixin id="rackMat" material="color:#0e2445; metalness:0.25; roughness:0.45"></a-mixin>
+    <a-mixin id="palletMat" material="color:#2ecc71; metalness:0.05; roughness:0.75"></a-mixin>
+    <a-mixin id="floorMat" material="color:#101a2d; opacity:0.84; transparent:true"></a-mixin>
+  </a-assets>
+
+  <a-marker id="marker" preset="hiro" emitevents="true" smooth="true" smoothCount="6" smoothTolerance="0.01" smoothThreshold="3">
+    <a-entity id="warehouseRoot" position="0 0.025 0" rotation="0 0 0" scale="0.022 0.022 0.022"></a-entity>
+  </a-marker>
+
+  <a-entity camera cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+</a-scene>
+
+<script>
+/* Datos demo. Luego aquí se conecta la exportación del MiniWMS maestro. */
+const warehouseData = {
+  meta: {
+    name: "CEVA · MiniWMS Demo",
+    lastUpdate: new Date().toLocaleString("es-MX"),
+    scale: "Maqueta AR"
+  },
+  racks: [
+    { id:"RC01", x:-7, z:-4, levels:4, bays:8, occupied:18, capacity:32, np:["98A1850","100506046"], lot:["L-2403","L-2408"] },
+    { id:"RC02", x:-4.8, z:-4, levels:4, bays:8, occupied:24, capacity:32, np:["99B5492","E7137200"], lot:["L-2402","L-2411"] },
+    { id:"RC03", x:-2.6, z:-4, levels:4, bays:8, occupied:10, capacity:32, np:["A1840","B7721"], lot:["L-2414"] },
+    { id:"RC04", x: 0.4, z:-4, levels:4, bays:8, occupied:26, capacity:32, np:["98A1850","C5520"], lot:["L-2403","L-2409"] },
+    { id:"RC05", x: 2.6, z:-4, levels:4, bays:8, occupied:31, capacity:32, np:["100506046","D3301"], lot:["L-2410"] },
+    { id:"RC06", x: 4.8, z:-4, levels:4, bays:8, occupied:14, capacity:32, np:["F9010","99B5492"], lot:["L-2412"] },
+
+    { id:"RC07", x:-7, z: 0, levels:5, bays:10, occupied:35, capacity:50, np:["100506046","98A1850"], lot:["L-2501","L-2502"] },
+    { id:"RC08", x:-4.2, z: 0, levels:5, bays:10, occupied:22, capacity:50, np:["G1180","H7750"], lot:["L-2503"] },
+    { id:"RC09", x:-1.4, z: 0, levels:5, bays:10, occupied:47, capacity:50, np:["E7137200","C5520"], lot:["L-2504","L-2505"] },
+    { id:"RC10", x: 1.4, z: 0, levels:5, bays:10, occupied:40, capacity:50, np:["100506046","99B5492"], lot:["L-2506"] },
+    { id:"RC11", x: 4.2, z: 0, levels:5, bays:10, occupied:12, capacity:50, np:["J4500","K8810"], lot:["L-2507"] },
+    { id:"RC12", x: 7, z: 0, levels:5, bays:10, occupied:28, capacity:50, np:["M3300","N9900"], lot:["L-2508"] },
+
+    { id:"RC13", x:-6.3, z: 4.2, levels:4, bays:8, occupied:8, capacity:32, np:["P1100","Q5510"], lot:["L-2601"] },
+    { id:"RC14", x:-3.9, z: 4.2, levels:4, bays:8, occupied:30, capacity:32, np:["100506046","98A1850"], lot:["L-2602"] },
+    { id:"RC15", x:-1.5, z: 4.2, levels:4, bays:8, occupied:19, capacity:32, np:["R4400","S5521"], lot:["L-2603"] },
+    { id:"RC16", x: 1.5, z: 4.2, levels:4, bays:8, occupied:32, capacity:32, np:["99B5492","E7137200"], lot:["L-2604"] },
+    { id:"RC17", x: 3.9, z: 4.2, levels:4, bays:8, occupied:5, capacity:32, np:["T1010","U1120"], lot:["L-2605"] },
+    { id:"RC18", x: 6.3, z: 4.2, levels:4, bays:8, occupied:16, capacity:32, np:["V2001","W8871"], lot:["L-2606"] }
+  ],
+  zones: [
+    {id:"RECIBO", x:-8.8, z:-7.1, w:4.5, d:1.1, color:"#16a085"},
+    {id:"SURTIDO", x:4.8, z:-7.1, w:5.8, d:1.1, color:"#e67e22"},
+    {id:"AUDITORÍA", x:-8.8, z:7.2, w:5.0, d:1.1, color:"#9b59b6"},
+    {id:"EMBARQUE", x:4.8, z:7.2, w:5.8, d:1.1, color:"#3498db"}
+  ]
+};
+
+let currentScale = 0.022;
+let offsetX = 0;
+let offsetZ = 0;
+let currentRotY = 0;
+let heatmapOn = false;
+let selectedRackId = null;
+let modelBuilt = false;
+
+function startAR(){
+  document.getElementById("startOverlay").style.display = "none";
+  document.getElementById("tapHint").classList.add("show");
+  setTimeout(()=>document.getElementById("tapHint").classList.remove("show"), 4500);
+  buildWarehouse();
+}
+
+function openMarkerHelp(){
+  const msg = [
+    "Usa el marcador HIRO de AR.js.",
+    "",
+    "Forma rápida:",
+    "1) Busca en Google: 'AR.js HIRO marker print'.",
+    "2) Imprímelo en hoja carta o muéstralo en otra pantalla.",
+    "3) Ponlo plano sobre la mesa.",
+    "",
+    "En la siguiente versión puedo dejarte un marcador personalizado con NexoProcess / CEVA."
+  ].join("\n");
+  alert(msg);
+}
+
+function el(tag, attrs={}){
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k, v));
+  return e;
+}
+
+function buildWarehouse(){
+  if(modelBuilt) return;
+  const root = document.getElementById("warehouseRoot");
+
+
+  // PIN DE DIAGNÓSTICO:
+  // Este pin debe quedar exactamente en el centro del marcador HIRO.
+  const anchor = el("a-entity", { id:"arAnchorGuide", position:"0 0.018 0" });
+  anchor.appendChild(el("a-ring", {
+    position:"0 0.01 0",
+    rotation:"-90 0 0",
+    radiusInner:"1.15",
+    radiusOuter:"1.28",
+    color:"#4fc3f7",
+    opacity:"1",
+    transparent:"true"
+  }));
+  anchor.appendChild(el("a-cylinder", {
+    position:"0 0.26 0",
+    radius:"0.22",
+    height:"0.48",
+    color:"#ffe000",
+    opacity:"0.95"
+  }));
+  anchor.appendChild(el("a-box", {
+    position:"0 0.025 0",
+    width:"2.6",
+    height:"0.035",
+    depth:"0.075",
+    color:"#ffe000"
+  }));
+  anchor.appendChild(el("a-box", {
+    position:"0 0.026 0",
+    width:"0.075",
+    height:"0.035",
+    depth:"2.6",
+    color:"#ffe000"
+  }));
+  root.appendChild(anchor);
+
+  const warehouseGroup = el("a-entity", { id:"warehouseGroup", visible:"false" });
+  root.appendChild(warehouseGroup);
+
+  // Piso base
+  const floor = el("a-box", {
+    position:"0 -0.03 0",
+    width:"19.5",
+    height:"0.05",
+    depth:"16.5",
+    color:"#101a2d",
+    opacity:"0.86",
+    transparent:"true"
+  });
+  warehouseGroup.appendChild(floor);
+
+  // Grid simple
+  for(let x=-9; x<=9; x+=1){
+    const line = el("a-box", {
+      position:`${x} 0.005 0`,
+      width:"0.018",
+      height:"0.018",
+      depth:"16",
+      color:x===0?"#4fc3f7":"#1b3660",
+      opacity:x===0?".55":".28",
+      transparent:"true"
+    });
+    warehouseGroup.appendChild(line);
+  }
+  for(let z=-8; z<=8; z+=1){
+    const line = el("a-box", {
+      position:`0 0.006 ${z}`,
+      width:"19",
+      height:"0.018",
+      depth:"0.018",
+      color:z===0?"#4fc3f7":"#1b3660",
+      opacity:z===0?".55":".28",
+      transparent:"true"
+    });
+    warehouseGroup.appendChild(line);
+  }
+
+  // Zonas
+  warehouseData.zones.forEach(zone => {
+    const box = el("a-box", {
+      position:`${zone.x} 0.035 ${zone.z}`,
+      width:zone.w,
+      height:"0.06",
+      depth:zone.d,
+      color:zone.color,
+      opacity:"0.42",
+      transparent:"true"
+    });
+    warehouseGroup.appendChild(box);
+
+    const label = el("a-text", {
+      value:zone.id,
+      position:`${zone.x - zone.w/2 + .15} 0.12 ${zone.z}`,
+      rotation:"-90 0 0",
+      color:"#ffffff",
+      width:"4",
+      align:"left"
+    });
+    warehouseGroup.appendChild(label);
+  });
+
+  // Pasillos
+  [-2.1,2.1].forEach(z=>{
+    const aisle = el("a-box", {
+      position:`0 0.025 ${z}`,
+      width:"18.5",
+      height:"0.04",
+      depth:"0.6",
+      color:"#f39c12",
+      opacity:"0.17",
+      transparent:"true"
+    });
+    warehouseGroup.appendChild(aisle);
+  });
+
+  // Racks
+  warehouseData.racks.forEach(r => warehouseGroup.appendChild(createRack(r)));
+
+  // Título flotante
+  const title = el("a-text", {
+    value:"MiniWMS · Warehouse AR",
+    position:"-8.8 0.25 -8.6",
+    rotation:"-90 0 0",
+    color:"#4fc3f7",
+    width:"6"
+  });
+  warehouseGroup.appendChild(title);
+
+  modelBuilt = true;
+}
+
+function createRack(rack){
+  const group = el("a-entity", {
+    id:`rack-${rack.id}`,
+    class:"clickable rackEntity",
+    position:`${rack.x} 0 ${rack.z}`,
+    "data-rack":rack.id
+  });
+
+  const len = rack.bays * 0.28;
+  const height = rack.levels * 0.24;
+  const depth = 0.62;
+
+  // base invisible bigger click target
+  const hit = el("a-box", {
+    position:`0 ${height/2} 0`,
+    width:String(len + .2),
+    height:String(height + .15),
+    depth:String(depth + .25),
+    color:"#ffffff",
+    opacity:"0.001",
+    transparent:"true",
+    class:"clickable",
+    "data-rack":rack.id
+  });
+  group.appendChild(hit);
+
+  // columnas
+  for(let i=0;i<=rack.bays;i++){
+    const x = -len/2 + i*(len/rack.bays);
+    [-depth/2, depth/2].forEach(z=>{
+      group.appendChild(el("a-box",{
+        position:`${x} ${height/2} ${z}`,
+        width:"0.035",
+        height:String(height),
+        depth:"0.035",
+        color:"#607d9f",
+        metalness:"0.25",
+        roughness:"0.5"
+      }));
+    });
+  }
+
+  // niveles
+  for(let lvl=0; lvl<=rack.levels; lvl++){
+    const y = lvl * 0.24;
+    group.appendChild(el("a-box",{
+      position:`0 ${y} ${-depth/2}`,
+      width:String(len + .06),
+      height:"0.025",
+      depth:"0.035",
+      color:"#4a6382"
+    }));
+    group.appendChild(el("a-box",{
+      position:`0 ${y} ${depth/2}`,
+      width:String(len + .06),
+      height:"0.025",
+      depth:"0.035",
+      color:"#4a6382"
+    }));
+  }
+
+  // tarimas ocupadas
+  let placed = 0;
+  const cap = rack.levels * rack.bays;
+  for(let lvl=0; lvl<rack.levels; lvl++){
+    for(let bay=0; bay<rack.bays; bay++){
+      if(placed >= rack.occupied) break;
+      const x = -len/2 + (bay+.5)*(len/rack.bays);
+      const y = 0.08 + lvl*0.24;
+      const z = (bay % 2 === 0) ? -0.16 : 0.16;
+      const occRatio = rack.occupied / rack.capacity;
+      const color = heatColor(occRatio);
+      const pallet = el("a-box",{
+        position:`${x} ${y} ${z}`,
+        width:"0.20",
+        height:"0.13",
+        depth:"0.25",
+        color:color,
+        opacity:"0.92"
+      });
+      pallet.setAttribute("data-rack", rack.id);
+      group.appendChild(pallet);
+      placed++;
+    }
+  }
+
+  // etiqueta rack
+  const label = el("a-text", {
+    value:rack.id,
+    position:`${-len/2} ${height+.08} ${-depth/2-.16}`,
+    rotation:"-60 0 0",
+    color:"#4fc3f7",
+    width:"2.1"
+  });
+  group.appendChild(label);
+
+  group.addEventListener("click", () => selectRack(rack.id));
+  hit.addEventListener("click", () => selectRack(rack.id));
+
+  return group;
+}
+
+function heatColor(ratio){
+  if(!heatmapOn) return "#2ecc71";
+  if(ratio >= .90) return "#e74c3c";
+  if(ratio >= .70) return "#f39c12";
+  return "#2ecc71";
+}
+
+function rebuildRacks(){
+  const root = document.getElementById("warehouseRoot");
+  const group = document.getElementById("warehouseGroup") || root;
+  document.querySelectorAll(".rackEntity").forEach(e => e.remove());
+  warehouseData.racks.forEach(r => group.appendChild(createRack(r)));
+  if(selectedRackId) selectRack(selectedRackId, true);
+}
+
+function scaleModel(mult){
+  currentScale = Math.max(0.045, Math.min(0.32, currentScale * mult));
+  const root = document.getElementById("warehouseRoot");
+  root.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
+  updateInfo(`Escala ajustada: <b>${Math.round(currentScale*1000)}%</b>`);
+}
+
+function rotateModel(deg){
+  currentRotY += deg;
+  const root = document.getElementById("warehouseRoot");
+  root.setAttribute("rotation", `0 ${currentRotY} 0`);
+}
+
+
+function moveModel(dx, dz){
+  offsetX += dx;
+  offsetZ += dz;
+  applyOffset();
+  updateInfo(`Calibración rápida:<br>X: <b>${offsetX.toFixed(2)}</b> · Z: <b>${offsetZ.toFixed(2)}</b><br>Centra primero el pin azul/amarillo sobre el HIRO.`);
+}
+
+
+function applyOffset(){
+  const root = document.getElementById("warehouseRoot");
+  root.setAttribute("position", `${offsetX} 0.025 ${offsetZ}`);
+  const x = document.getElementById("calX");
+  const z = document.getElementById("calZ");
+  const xv = document.getElementById("calXVal");
+  const zv = document.getElementById("calZVal");
+  if(x) x.value = offsetX.toFixed(2);
+  if(z) z.value = offsetZ.toFixed(2);
+  if(xv) xv.textContent = offsetX.toFixed(2);
+  if(zv) zv.textContent = offsetZ.toFixed(2);
+}
+
+function setOffsetFromSliders(){
+  offsetX = Number(document.getElementById("calX").value);
+  offsetZ = Number(document.getElementById("calZ").value);
+  applyOffset();
+  updateInfo(`Ajuste fino:<br>X: <b>${offsetX.toFixed(2)}</b> · Z: <b>${offsetZ.toFixed(2)}</b><br>Centra primero el pin azul/amarillo sobre el HIRO.`);
+}
+
+function toggleWarehouseOnly(){
+  const g = document.getElementById("warehouseGroup");
+  if(!g) return;
+  const visible = g.getAttribute("visible") !== "false";
+  g.setAttribute("visible", visible ? "false" : "true");
+  updateInfo(visible
+    ? "<b>Modo diagnóstico:</b> solo pin. Centra el pin en el marcador."
+    : "<b>Almacén activado.</b> Si queda enorme, usa − Alejar. Si se corre, usa X/Z.");
+}
+
+function toggleMiniUI(){
+  document.body.classList.toggle("min-ui");
+}
+
+function centerPreset(side){
+  if(side === "right"){
+    offsetX = 1.25;
+    offsetZ = 0;
+  }else{
+    offsetX = -1.25;
+    offsetZ = 0;
+  }
+  applyOffset();
+  updateInfo(`<b>Preset ${side === "right" ? "derecha" : "izquierda"} aplicado.</b><br>Ajusta fino con las flechas o sliders X/Z.`);
+}
+
+
+function resetView(){
+  currentScale = 0.022;
+  offsetX = 0;
+  offsetZ = 0;
+  currentRotY = 0;
+  const root = document.getElementById("warehouseRoot");
+  root.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
+  root.setAttribute("rotation", `0 0 0`);
+  root.setAttribute("position", `0 0.025 0`);
+  applyOffset();
+  const g = document.getElementById("warehouseGroup");
+  if(g) g.setAttribute("visible","false");
+  clearHighlight();
+  updateInfo("<b>Vista reiniciada y centrada.</b><br>Primero verás solo el pin azul/amarillo. Centra ese pin sobre el HIRO; luego presiona “Solo Pin” para mostrar/ocultar el almacén.");
+}
+
+function toggleHeatmap(){
+  heatmapOn = !heatmapOn;
+  rebuildRacks();
+  updateInfo(heatmapOn 
+    ? "<b>Mapa de ocupación activo.</b> Verde = bajo, naranja = medio/alto, rojo = crítico."
+    : "<b>Mapa de ocupación apagado.</b> Vista simple de tarimas ocupadas.");
+}
+
+function selectRack(id, silent=false){
+  selectedRackId = id;
+  document.querySelectorAll(".rackEntity").forEach(e=>{
+    e.querySelectorAll("a-box").forEach(b=>{
+      const dr = b.getAttribute("data-rack");
+      if(dr === id){
+        b.setAttribute("emissive", "#ffe000");
+        b.setAttribute("emissiveIntensity", "0.35");
+      }else{
+        b.removeAttribute("emissive");
+        b.removeAttribute("emissiveIntensity");
+      }
+    });
+  });
+  const r = warehouseData.racks.find(x=>x.id===id);
+  if(r && !silent){
+    updateInfo(`<b>${r.id}</b><br>Ocupación: <b>${r.occupied}/${r.capacity}</b> posiciones (${Math.round(r.occupied/r.capacity*100)}%).<br>NP demo: ${r.np.join(", ")}<br>Lotes demo: ${r.lot.join(", ")}`);
+  }
+}
+
+function clearHighlight(){
+  selectedRackId = null;
+  document.querySelectorAll(".rackEntity a-box").forEach(b=>{
+    b.removeAttribute("emissive");
+    b.removeAttribute("emissiveIntensity");
+  });
+  updateInfo("<b>Resaltado limpio.</b> Puedes buscar un NP, lote o rack.");
+}
+
+function searchItem(){
+  const q = document.getElementById("searchInput").value.trim().toUpperCase();
+  if(!q){
+    updateInfo("Escribe un NP, lote o rack para buscar.");
+    return;
+  }
+
+  const hits = warehouseData.racks.filter(r =>
+    r.id.toUpperCase().includes(q) ||
+    r.np.some(n => n.toUpperCase().includes(q)) ||
+    r.lot.some(l => l.toUpperCase().includes(q))
+  );
+
+  if(!hits.length){
+    clearHighlight();
+    updateInfo(`No encontré coincidencias para <b>${q}</b> en la data demo.`);
+    return;
+  }
+
+  clearHighlight();
+  hits.forEach(r => selectRack(r.id, true));
+  const txt = hits.map(r=>`${r.id} (${Math.round(r.occupied/r.capacity*100)}%)`).join(", ");
+  updateInfo(`Resultado para <b>${q}</b>:<br>${txt}<br><br>En versión conectada, aquí se mostraría NP, lote, qty, ubicación exacta y responsable.`);
+}
+
+function highlightPickingRoute(){
+  clearHighlight();
+  const route = ["RC07","RC10","RC14","RC16"];
+  route.forEach(id => selectRack(id, true));
+  updateInfo(`<b>Ruta de picking demo:</b><br>${route.join(" → ")}<br>Después podemos generarla con FIFO real desde tu MiniWMS.`);
+}
+
+function updateInfo(html){
+  document.getElementById("infoCard").innerHTML = html;
+}
+
+window.addEventListener("load", () => {
+  const marker = document.getElementById("marker");
+  const dot = document.getElementById("markerDot");
+  const text = document.getElementById("markerText");
+  const lost = document.getElementById("markerLost");
+
+  marker.addEventListener("markerFound", () => {
+    dot.classList.add("ok");
+    text.textContent = "Marcador detectado";
+    lost.classList.remove("show");
+    if(!modelBuilt) buildWarehouse();
+    updateInfo(`<b>Marcador detectado.</b><br>Pin de calibración desplegado. Presiona “Solo Pin” para mostrar el almacén.<br>Última actualización demo: ${warehouseData.meta.lastUpdate}`);
+  });
+
+  marker.addEventListener("markerLost", () => {
+    dot.classList.remove("ok");
+    text.textContent = "Buscando marcador";
+    lost.classList.add("show");
+  });
+
+  // Gestos: un dedo gira, dos dedos escalan.
+  let lastX = null;
+  let lastDist = null;
+
+  document.addEventListener("touchstart", e=>{
+    if(e.target.closest(".panel") || e.target.closest("#startOverlay")) return;
+    if(e.touches.length === 1){
+      lastX = e.touches[0].clientX;
+    }else if(e.touches.length === 2){
+      lastDist = touchDistance(e.touches[0], e.touches[1]);
+    }
+  }, {passive:true});
+
+  document.addEventListener("touchmove", e=>{
+    if(e.target.closest(".panel") || e.target.closest("#startOverlay")) return;
+    if(e.touches.length === 1 && lastX !== null){
+      const dx = e.touches[0].clientX - lastX;
+      if(Math.abs(dx) > 8){
+        rotateModel(dx * 0.18);
+        lastX = e.touches[0].clientX;
+      }
+    }else if(e.touches.length === 2 && lastDist !== null){
+      const d = touchDistance(e.touches[0], e.touches[1]);
+      const ratio = d / lastDist;
+      if(ratio > 1.03 || ratio < .97){
+        scaleModel(ratio);
+        lastDist = d;
+      }
+    }
+  }, {passive:true});
+
+  document.addEventListener("touchend", ()=>{
+    lastX = null;
+    lastDist = null;
+  }, {passive:true});
+});
+
+function touchDistance(a,b){
+  const dx = a.clientX-b.clientX;
+  const dy = a.clientY-b.clientY;
+  return Math.sqrt(dx*dx+dy*dy);
+}
+</script>
+</body>
+</html>
