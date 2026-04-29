@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR Test · Cubo HIRO</title>
+<title>MiniWMS AR · V5 Estable</title>
 
 <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -29,7 +29,7 @@ body{
   right:0;
   z-index:50;
   padding:12px;
-  background:rgba(5,10,22,.88);
+  background:linear-gradient(180deg,rgba(5,10,22,.92),rgba(5,10,22,.65));
   color:#4fc3f7;
   font-weight:700;
   font-size:15px;
@@ -49,7 +49,7 @@ body{
   border:1px solid #e74c3c;
   font-size:13px;
   text-align:center;
-  min-width:220px;
+  min-width:230px;
 }
 
 #status.ok{
@@ -64,44 +64,180 @@ body{
   right:12px;
   bottom:12px;
   z-index:70;
-  background:rgba(5,10,22,.88);
+  background:rgba(5,10,22,.90);
   border:1px solid #1b3660;
   border-radius:16px;
   padding:12px;
   color:white;
+  backdrop-filter:blur(10px);
+  box-shadow:0 12px 35px rgba(0,0,0,.45);
+}
+
+#controls.hidden{
+  display:none;
+}
+
+#showControls{
+  position:fixed;
+  left:50%;
+  bottom:12px;
+  transform:translateX(-50%);
+  z-index:80;
+  display:none;
+  padding:10px 18px;
+  border-radius:999px;
+  border:1px solid #4fc3f7;
+  background:rgba(5,10,22,.92);
+  color:#4fc3f7;
+  font-size:14px;
+  font-weight:800;
+}
+
+#showControls.show{
+  display:block;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:8px;
 }
 
 button{
   width:100%;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid #4fc3f7;
-  background:rgba(18,38,75,.9);
-  color:#4fc3f7;
-  font-size:15px;
+  padding:10px 8px;
+  border-radius:11px;
+  border:1px solid #1b3660;
+  background:rgba(18,38,75,.92);
+  color:#a8d4ff;
+  font-size:13px;
   font-weight:700;
 }
 
-#info{
+button:active{
+  transform:scale(.97);
+}
+
+button.primary{
+  border-color:#4fc3f7;
+  color:#4fc3f7;
+}
+
+button.green{
+  border-color:#2ecc71;
+  color:#55efc4;
+}
+
+button.orange{
+  border-color:#f39c12;
+  color:#f5b041;
+}
+
+button.purple{
+  border-color:#9b59b6;
+  color:#d7b4ea;
+}
+
+.searchRow{
+  display:flex;
+  gap:8px;
   margin-top:8px;
+}
+
+input{
+  flex:1;
+  min-width:0;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #1b3660;
+  background:rgba(18,38,75,.9);
+  color:#e0eaff;
+  font-size:13px;
+  outline:none;
+}
+
+input:focus{
+  border-color:#4fc3f7;
+}
+
+#info{
+  margin-top:9px;
+  padding:9px 10px;
+  border:1px solid rgba(79,195,247,.22);
+  border-radius:12px;
+  background:rgba(12,25,55,.70);
+  color:#c7dcf5;
   font-size:12px;
-  color:#a8d4ff;
-  line-height:1.5;
+  line-height:1.55;
+}
+
+#info b{
+  color:#4fc3f7;
+}
+
+.small{
+  font-size:11px;
+  color:#7fb3e0;
+  line-height:1.4;
+}
+
+@media(max-width:420px){
+  .grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .grid.cal{
+    grid-template-columns:repeat(4,1fr);
+  }
+
+  button{
+    font-size:12px;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div id="top">🏭 MiniWMS AR · Prueba de Render 3D</div>
+<div id="top">🏭 MiniWMS AR · V5 Estable</div>
 <div id="status">Buscando marcador HIRO...</div>
 
 <div id="controls">
-  <button onclick="toggleObjects()">Mostrar / Ocultar objetos 3D</button>
+  <div class="grid">
+    <button class="primary" onclick="scaleWarehouse(1.15)">＋ Acercar</button>
+    <button class="primary" onclick="scaleWarehouse(0.87)">－ Alejar</button>
+    <button onclick="rotateWarehouse(-15)">↶ Girar</button>
+    <button onclick="rotateWarehouse(15)">↷ Girar</button>
+
+    <button class="green" onclick="toggleWarehouse()">Almacén</button>
+    <button class="orange" onclick="toggleHeatmap()">Ocupación</button>
+    <button class="purple" onclick="highlightRoute()">Ruta Pick</button>
+    <button onclick="resetWarehouse()">Reset</button>
+  </div>
+
+  <div class="grid cal">
+    <button class="purple" onclick="moveWarehouse(0,-0.08)">↑</button>
+    <button class="purple" onclick="moveWarehouse(-0.08,0)">←</button>
+    <button class="purple" onclick="moveWarehouse(0.08,0)">→</button>
+    <button class="purple" onclick="moveWarehouse(0,0.08)">↓</button>
+  </div>
+
+  <div class="searchRow">
+    <input id="searchInput" placeholder="Buscar rack o NP demo. Ej: RC07, 98A1850" onkeydown="if(event.key==='Enter')searchRack()">
+    <button class="primary" onclick="searchRack()">Buscar</button>
+  </div>
+
   <div id="info">
-    Debes ver un cubo rojo, una esfera amarilla y una placa azul exactamente encima del marcador HIRO.
+    <b>Estado:</b> esperando marcador. Al detectarlo, debe aparecer una base azul, pin amarillo y la maqueta del almacén.
+  </div>
+
+  <div style="margin-top:8px;">
+    <button onclick="hideControls()">Ocultar controles</button>
   </div>
 </div>
+
+<button id="showControls" onclick="showControls()">▲ Controles</button>
 
 <a-scene
   embedded
@@ -111,63 +247,103 @@ button{
 
   <a-marker id="hiroMarker" preset="hiro" emitevents="true">
 
-    <!-- PLACA AZUL GIGANTE SOBRE EL MARCADOR -->
+    <!-- BASE VISUAL SOBRE EL MARCADOR -->
     <a-box
       id="basePlate"
-      position="0 0.02 0"
-      width="1.4"
-      height="0.03"
-      depth="1.4"
+      position="0 0.015 0"
+      width="1.35"
+      height="0.025"
+      depth="1.35"
       color="#00d9ff"
-      opacity="0.75"
+      opacity="0.35"
       transparent="true">
     </a-box>
 
-    <!-- CUBO ROJO GRANDE -->
-    <a-box
-      id="testCube"
-      position="0 0.45 0"
-      width="0.55"
-      height="0.55"
-      depth="0.55"
-      color="#ff0033">
-    </a-box>
-
-    <!-- ESFERA AMARILLA ARRIBA -->
-    <a-sphere
-      id="testSphere"
-      position="0 0.95 0"
-      radius="0.18"
+    <!-- PIN CENTRAL PARA SABER QUE ESTÁ ANCLADO -->
+    <a-cylinder
+      id="anchorPin"
+      position="0 0.22 0"
+      radius="0.045"
+      height="0.38"
       color="#ffe000">
+    </a-cylinder>
+
+    <a-sphere
+      id="anchorBall"
+      position="0 0.45 0"
+      radius="0.075"
+      color="#00d9ff">
     </a-sphere>
 
-    <!-- CRUZ VERDE PARA VER EL CENTRO -->
-    <a-box
-      id="centerLineX"
-      position="0 0.08 0"
-      width="1.8"
-      height="0.035"
-      depth="0.035"
-      color="#00ff66">
-    </a-box>
+    <!-- GRUPO DEL ALMACÉN -->
+    <a-entity
+      id="warehouse"
+      position="0 0.04 0"
+      rotation="0 0 0"
+      scale="0.055 0.055 0.055"
+      visible="true">
 
-    <a-box
-      id="centerLineZ"
-      position="0 0.09 0"
-      width="0.035"
-      height="0.035"
-      depth="1.8"
-      color="#00ff66">
-    </a-box>
+      <!-- PISO -->
+      <a-box
+        position="0 0 0"
+        width="18"
+        height="0.08"
+        depth="13"
+        color="#101a2d"
+        opacity="0.88"
+        transparent="true">
+      </a-box>
 
-    <!-- TEXTO FLOTANTE -->
-    <a-text
-      value="HIRO OK"
-      position="-0.45 1.25 0"
-      rotation="-90 0 0"
-      color="#ffffff"
-      width="3">
-    </a-text>
+      <!-- ZONAS -->
+      <a-box position="-6 0.08 -5.5" width="4" height="0.08" depth="1" color="#16a085" opacity="0.65" transparent="true"></a-box>
+      <a-text value="RECIBO" position="-7.7 0.18 -5.5" rotation="-90 0 0" color="#ffffff" width="4"></a-text>
+
+      <a-box position="5.5 0.08 -5.5" width="4.5" height="0.08" depth="1" color="#e67e22" opacity="0.65" transparent="true"></a-box>
+      <a-text value="SURTIDO" position="3.8 0.18 -5.5" rotation="-90 0 0" color="#ffffff" width="4"></a-text>
+
+      <a-box position="-6 0.08 5.5" width="4" height="0.08" depth="1" color="#9b59b6" opacity="0.65" transparent="true"></a-box>
+      <a-text value="AUDITORIA" position="-7.8 0.18 5.5" rotation="-90 0 0" color="#ffffff" width="4"></a-text>
+
+      <a-box position="5.5 0.08 5.5" width="4.5" height="0.08" depth="1" color="#3498db" opacity="0.65" transparent="true"></a-box>
+      <a-text value="EMBARQUE" position="3.6 0.18 5.5" rotation="-90 0 0" color="#ffffff" width="4"></a-text>
+
+      <!-- PASILLOS -->
+      <a-box position="0 0.09 -2" width="17" height="0.06" depth="0.45" color="#f39c12" opacity="0.25" transparent="true"></a-box>
+      <a-box position="0 0.09 2" width="17" height="0.06" depth="0.45" color="#f39c12" opacity="0.25" transparent="true"></a-box>
+
+      <!-- RACKS: FILA 1 -->
+      <a-entity id="RC01" class="rack" data-rack="RC01" position="-7 -0.0 -4"></a-entity>
+      <a-entity id="RC02" class="rack" data-rack="RC02" position="-4.5 -0.0 -4"></a-entity>
+      <a-entity id="RC03" class="rack" data-rack="RC03" position="-2 -0.0 -4"></a-entity>
+      <a-entity id="RC04" class="rack" data-rack="RC04" position="0.5 -0.0 -4"></a-entity>
+      <a-entity id="RC05" class="rack" data-rack="RC05" position="3 -0.0 -4"></a-entity>
+      <a-entity id="RC06" class="rack" data-rack="RC06" position="5.5 -0.0 -4"></a-entity>
+
+      <!-- RACKS: FILA 2 -->
+      <a-entity id="RC07" class="rack" data-rack="RC07" position="-7 -0.0 0"></a-entity>
+      <a-entity id="RC08" class="rack" data-rack="RC08" position="-4.5 -0.0 0"></a-entity>
+      <a-entity id="RC09" class="rack" data-rack="RC09" position="-2 -0.0 0"></a-entity>
+      <a-entity id="RC10" class="rack" data-rack="RC10" position="0.5 -0.0 0"></a-entity>
+      <a-entity id="RC11" class="rack" data-rack="RC11" position="3 -0.0 0"></a-entity>
+      <a-entity id="RC12" class="rack" data-rack="RC12" position="5.5 -0.0 0"></a-entity>
+
+      <!-- RACKS: FILA 3 -->
+      <a-entity id="RC13" class="rack" data-rack="RC13" position="-7 -0.0 4"></a-entity>
+      <a-entity id="RC14" class="rack" data-rack="RC14" position="-4.5 -0.0 4"></a-entity>
+      <a-entity id="RC15" class="rack" data-rack="RC15" position="-2 -0.0 4"></a-entity>
+      <a-entity id="RC16" class="rack" data-rack="RC16" position="0.5 -0.0 4"></a-entity>
+      <a-entity id="RC17" class="rack" data-rack="RC17" position="3 -0.0 4"></a-entity>
+      <a-entity id="RC18" class="rack" data-rack="RC18" position="5.5 -0.0 4"></a-entity>
+
+      <a-text
+        value="MiniWMS AR"
+        position="-8.3 0.25 -6.2"
+        rotation="-90 0 0"
+        color="#4fc3f7"
+        width="5">
+      </a-text>
+
+    </a-entity>
 
   </a-marker>
 
@@ -175,34 +351,287 @@ button{
 </a-scene>
 
 <script>
-let objectsVisible = true;
+const rackInfo = {
+  RC01:{occ:18, cap:32, np:["98A1850","100506046"]},
+  RC02:{occ:24, cap:32, np:["99B5492","E7137200"]},
+  RC03:{occ:10, cap:32, np:["A1840","B7721"]},
+  RC04:{occ:26, cap:32, np:["98A1850","C5520"]},
+  RC05:{occ:31, cap:32, np:["100506046","D3301"]},
+  RC06:{occ:14, cap:32, np:["F9010","99B5492"]},
+  RC07:{occ:35, cap:50, np:["100506046","98A1850"]},
+  RC08:{occ:22, cap:50, np:["G1180","H7750"]},
+  RC09:{occ:47, cap:50, np:["E7137200","C5520"]},
+  RC10:{occ:40, cap:50, np:["100506046","99B5492"]},
+  RC11:{occ:12, cap:50, np:["J4500","K8810"]},
+  RC12:{occ:28, cap:50, np:["M3300","N9900"]},
+  RC13:{occ:8, cap:32, np:["P1100","Q5510"]},
+  RC14:{occ:30, cap:32, np:["100506046","98A1850"]},
+  RC15:{occ:19, cap:32, np:["R4400","S5521"]},
+  RC16:{occ:32, cap:32, np:["99B5492","E7137200"]},
+  RC17:{occ:5, cap:32, np:["T1010","U1120"]},
+  RC18:{occ:16, cap:32, np:["V2001","W8871"]}
+};
 
-function toggleObjects(){
-  objectsVisible = !objectsVisible;
+let scale = 0.055;
+let rotationY = 0;
+let offsetX = 0;
+let offsetZ = 0;
+let heatmap = false;
+let warehouseVisible = true;
 
-  const ids = [
-    "basePlate",
-    "testCube",
-    "testSphere",
-    "centerLineX",
-    "centerLineZ"
-  ];
+function initRacks(){
+  Object.keys(rackInfo).forEach(id => {
+    const rack = document.getElementById(id);
+    const info = rackInfo[id];
 
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if(el){
-      el.setAttribute("visible", objectsVisible ? "true" : "false");
-    }
+    createRackVisual(rack, id, info);
   });
 }
 
+function createRackVisual(parent, id, info){
+  const ratio = info.occ / info.cap;
+  const color = getRackColor(ratio);
+
+  const rackBody = document.createElement("a-box");
+  rackBody.setAttribute("position", "0 0.48 0");
+  rackBody.setAttribute("width", "1.6");
+  rackBody.setAttribute("height", "0.9");
+  rackBody.setAttribute("depth", "0.55");
+  rackBody.setAttribute("color", "#263f5e");
+  rackBody.setAttribute("opacity", "0.95");
+  rackBody.setAttribute("data-id", id);
+  parent.appendChild(rackBody);
+
+  for(let i = 0; i < 4; i++){
+    const level = document.createElement("a-box");
+    level.setAttribute("position", `0 ${0.18 + i * 0.2} 0.31`);
+    level.setAttribute("width", "1.7");
+    level.setAttribute("height", "0.025");
+    level.setAttribute("depth", "0.04");
+    level.setAttribute("color", "#6f8cad");
+    parent.appendChild(level);
+  }
+
+  const fill = document.createElement("a-box");
+  fill.setAttribute("position", "0 0.28 0");
+  fill.setAttribute("width", String(1.45 * Math.max(0.1, ratio)));
+  fill.setAttribute("height", "0.22");
+  fill.setAttribute("depth", "0.42");
+  fill.setAttribute("color", color);
+  fill.setAttribute("opacity", "0.98");
+  fill.setAttribute("data-id", id);
+  parent.appendChild(fill);
+
+  const label = document.createElement("a-text");
+  label.setAttribute("value", id);
+  label.setAttribute("position", "-0.68 1.03 -0.38");
+  label.setAttribute("rotation", "-70 0 0");
+  label.setAttribute("color", "#ffffff");
+  label.setAttribute("width", "2.4");
+  parent.appendChild(label);
+
+  parent.addEventListener("click", () => selectRack(id));
+}
+
+function getRackColor(ratio){
+  if(!heatmap) return "#2ecc71";
+  if(ratio >= 0.90) return "#e74c3c";
+  if(ratio >= 0.70) return "#f39c12";
+  return "#2ecc71";
+}
+
+function refreshRackColors(){
+  Object.keys(rackInfo).forEach(id => {
+    const rack = document.getElementById(id);
+    const info = rackInfo[id];
+    const ratio = info.occ / info.cap;
+    const color = getRackColor(ratio);
+
+    const boxes = rack.querySelectorAll("a-box");
+
+    boxes.forEach((box, index) => {
+      if(index === 5){
+        box.setAttribute("color", color);
+      }
+    });
+  });
+}
+
+function selectRack(id){
+  clearHighlight();
+
+  const rack = document.getElementById(id);
+  const info = rackInfo[id];
+
+  rack.querySelectorAll("a-box").forEach(box => {
+    box.setAttribute("emissive", "#ffe000");
+    box.setAttribute("emissiveIntensity", "0.45");
+  });
+
+  updateInfo(
+    `<b>${id}</b><br>` +
+    `Ocupación: <b>${info.occ}/${info.cap}</b> (${Math.round(info.occ/info.cap*100)}%).<br>` +
+    `NP demo: ${info.np.join(", ")}`
+  );
+}
+
+function clearHighlight(){
+  document.querySelectorAll(".rack a-box").forEach(box => {
+    box.removeAttribute("emissive");
+    box.removeAttribute("emissiveIntensity");
+  });
+
+  updateInfo("<b>Resaltado limpio.</b><br>Selecciona un rack o busca un NP.");
+}
+
+function scaleWarehouse(mult){
+  scale = Math.max(0.015, Math.min(0.16, scale * mult));
+  applyTransform();
+
+  updateInfo(`Escala: <b>${scale.toFixed(3)}</b>`);
+}
+
+function rotateWarehouse(deg){
+  rotationY += deg;
+  applyTransform();
+}
+
+function moveWarehouse(dx, dz){
+  offsetX += dx;
+  offsetZ += dz;
+  applyTransform();
+
+  updateInfo(
+    `Offset:<br>` +
+    `X: <b>${offsetX.toFixed(2)}</b> · Z: <b>${offsetZ.toFixed(2)}</b>`
+  );
+}
+
+function applyTransform(){
+  const warehouse = document.getElementById("warehouse");
+  warehouse.setAttribute("scale", `${scale} ${scale} ${scale}`);
+  warehouse.setAttribute("rotation", `0 ${rotationY} 0`);
+  warehouse.setAttribute("position", `${offsetX} 0.04 ${offsetZ}`);
+}
+
+function resetWarehouse(){
+  scale = 0.055;
+  rotationY = 0;
+  offsetX = 0;
+  offsetZ = 0;
+  warehouseVisible = true;
+
+  const warehouse = document.getElementById("warehouse");
+  warehouse.setAttribute("visible", "true");
+
+  applyTransform();
+  clearHighlight();
+
+  updateInfo("<b>Vista reiniciada.</b><br>La maqueta volvió al centro del HIRO.");
+}
+
+function toggleWarehouse(){
+  warehouseVisible = !warehouseVisible;
+  document.getElementById("warehouse").setAttribute("visible", warehouseVisible ? "true" : "false");
+
+  updateInfo(
+    warehouseVisible
+      ? "<b>Almacén visible.</b>"
+      : "<b>Almacén oculto.</b> Solo queda el pin/base de referencia."
+  );
+}
+
+function toggleHeatmap(){
+  heatmap = !heatmap;
+  refreshRackColors();
+
+  updateInfo(
+    heatmap
+      ? "<b>Ocupación activa.</b><br>Verde bajo, naranja alto, rojo crítico."
+      : "<b>Ocupación apagada.</b><br>Vista simple."
+  );
+}
+
+function highlightRoute(){
+  clearHighlight();
+
+  ["RC07","RC10","RC14","RC16"].forEach(id => {
+    const rack = document.getElementById(id);
+
+    rack.querySelectorAll("a-box").forEach(box => {
+      box.setAttribute("emissive", "#ffe000");
+      box.setAttribute("emissiveIntensity", "0.55");
+    });
+  });
+
+  updateInfo("<b>Ruta picking demo:</b><br>RC07 → RC10 → RC14 → RC16");
+}
+
+function searchRack(){
+  const q = document.getElementById("searchInput").value.trim().toUpperCase();
+
+  if(!q){
+    updateInfo("Escribe un rack o NP demo.");
+    return;
+  }
+
+  const hits = Object.keys(rackInfo).filter(id => {
+    const info = rackInfo[id];
+
+    return id.includes(q) || info.np.some(np => np.includes(q));
+  });
+
+  if(!hits.length){
+    clearHighlight();
+    updateInfo(`No encontré: <b>${q}</b>`);
+    return;
+  }
+
+  clearHighlight();
+
+  hits.forEach(id => {
+    const rack = document.getElementById(id);
+
+    rack.querySelectorAll("a-box").forEach(box => {
+      box.setAttribute("emissive", "#ffe000");
+      box.setAttribute("emissiveIntensity", "0.55");
+    });
+  });
+
+  updateInfo(
+    `Resultado para <b>${q}</b>:<br>` +
+    hits.join(", ")
+  );
+}
+
+function updateInfo(html){
+  document.getElementById("info").innerHTML = html;
+}
+
+function hideControls(){
+  document.getElementById("controls").classList.add("hidden");
+  document.getElementById("showControls").classList.add("show");
+}
+
+function showControls(){
+  document.getElementById("controls").classList.remove("hidden");
+  document.getElementById("showControls").classList.remove("show");
+}
+
 window.addEventListener("load", () => {
+  initRacks();
+
   const marker = document.getElementById("hiroMarker");
   const status = document.getElementById("status");
 
   marker.addEventListener("markerFound", () => {
-    status.textContent = "Marcador detectado · Debe verse el cubo 3D";
+    status.textContent = "Marcador detectado · MiniWMS AR activo";
     status.classList.add("ok");
+
+    updateInfo(
+      "<b>Marcador detectado.</b><br>" +
+      "Si ves la base azul, el pin y los racks, ya estamos en la base correcta."
+    );
   });
 
   marker.addEventListener("markerLost", () => {
