@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V5 Estable</title>
+<title>MiniWMS AR · V6 Visual Realista</title>
 
 <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -29,11 +29,12 @@ body{
   right:0;
   z-index:50;
   padding:12px;
-  background:linear-gradient(180deg,rgba(5,10,22,.92),rgba(5,10,22,.65));
+  background:linear-gradient(180deg,rgba(5,10,22,.94),rgba(5,10,22,.68));
   color:#4fc3f7;
-  font-weight:700;
+  font-weight:800;
   font-size:15px;
-  border-bottom:1px solid #1b3660;
+  border-bottom:1px solid rgba(79,195,247,.35);
+  backdrop-filter:blur(10px);
 }
 
 #status{
@@ -50,6 +51,7 @@ body{
   font-size:13px;
   text-align:center;
   min-width:230px;
+  box-shadow:0 8px 25px rgba(0,0,0,.35);
 }
 
 #status.ok{
@@ -91,6 +93,7 @@ body{
   color:#4fc3f7;
   font-size:14px;
   font-weight:800;
+  box-shadow:0 8px 25px rgba(0,0,0,.45);
 }
 
 #showControls.show{
@@ -139,6 +142,11 @@ button.purple{
   color:#d7b4ea;
 }
 
+button.red{
+  border-color:#e74c3c;
+  color:#ff9999;
+}
+
 .searchRow{
   display:flex;
   gap:8px;
@@ -176,12 +184,6 @@ input:focus{
   color:#4fc3f7;
 }
 
-.small{
-  font-size:11px;
-  color:#7fb3e0;
-  line-height:1.4;
-}
-
 @media(max-width:420px){
   .grid{
     grid-template-columns:repeat(2,1fr);
@@ -200,7 +202,7 @@ input:focus{
 
 <body>
 
-<div id="top">🏭 MiniWMS AR · V5 Estable</div>
+<div id="top">🏭 MiniWMS AR · V6 Visual Realista</div>
 <div id="status">Buscando marcador HIRO...</div>
 
 <div id="controls">
@@ -214,6 +216,11 @@ input:focus{
     <button class="orange" onclick="toggleHeatmap()">Ocupación</button>
     <button class="purple" onclick="highlightRoute()">Ruta Pick</button>
     <button onclick="resetWarehouse()">Reset</button>
+
+    <button class="primary" onclick="toggleStyleMode()">Modo Visual</button>
+    <button class="orange" onclick="toggleAnchor()">Base AR</button>
+    <button class="red" onclick="clearHighlight()">Limpiar</button>
+    <button onclick="hideControls()">Ocultar</button>
   </div>
 
   <div class="grid cal">
@@ -229,11 +236,7 @@ input:focus{
   </div>
 
   <div id="info">
-    <b>Estado:</b> esperando marcador. Al detectarlo, debe aparecer una base azul, pin amarillo y la maqueta del almacén.
-  </div>
-
-  <div style="margin-top:8px;">
-    <button onclick="hideControls()">Ocultar controles</button>
+    <b>Estado:</b> esperando marcador. Al detectarlo, aparecerá una maqueta más realista del almacén.
   </div>
 </div>
 
@@ -247,102 +250,55 @@ input:focus{
 
   <a-marker id="hiroMarker" preset="hiro" emitevents="true">
 
-    <!-- BASE VISUAL SOBRE EL MARCADOR -->
-    <a-box
-      id="basePlate"
-      position="0 0.015 0"
-      width="1.35"
-      height="0.025"
-      depth="1.35"
-      color="#00d9ff"
-      opacity="0.35"
-      transparent="true">
-    </a-box>
-
-    <!-- PIN CENTRAL PARA SABER QUE ESTÁ ANCLADO -->
-    <a-cylinder
-      id="anchorPin"
-      position="0 0.22 0"
-      radius="0.045"
-      height="0.38"
-      color="#ffe000">
-    </a-cylinder>
-
-    <a-sphere
-      id="anchorBall"
-      position="0 0.45 0"
-      radius="0.075"
-      color="#00d9ff">
-    </a-sphere>
-
-    <!-- GRUPO DEL ALMACÉN -->
-    <a-entity
-      id="warehouse"
-      position="0 0.04 0"
-      rotation="0 0 0"
-      scale="0.055 0.055 0.055"
-      visible="true">
-
-      <!-- PISO -->
+    <a-entity id="anchorGroup" visible="true">
       <a-box
-        position="0 0 0"
-        width="18"
-        height="0.08"
-        depth="13"
-        color="#101a2d"
-        opacity="0.88"
+        id="basePlate"
+        position="0 0.012 0"
+        width="1.30"
+        height="0.018"
+        depth="1.30"
+        color="#00d9ff"
+        opacity="0.22"
         transparent="true">
       </a-box>
 
-      <!-- ZONAS -->
-      <a-box position="-6 0.08 -5.5" width="4" height="0.08" depth="1" color="#16a085" opacity="0.65" transparent="true"></a-box>
-      <a-text value="RECIBO" position="-7.7 0.18 -5.5" rotation="-90 0 0" color="#ffffff" width="4"></a-text>
-
-      <a-box position="5.5 0.08 -5.5" width="4.5" height="0.08" depth="1" color="#e67e22" opacity="0.65" transparent="true"></a-box>
-      <a-text value="SURTIDO" position="3.8 0.18 -5.5" rotation="-90 0 0" color="#ffffff" width="4"></a-text>
-
-      <a-box position="-6 0.08 5.5" width="4" height="0.08" depth="1" color="#9b59b6" opacity="0.65" transparent="true"></a-box>
-      <a-text value="AUDITORIA" position="-7.8 0.18 5.5" rotation="-90 0 0" color="#ffffff" width="4"></a-text>
-
-      <a-box position="5.5 0.08 5.5" width="4.5" height="0.08" depth="1" color="#3498db" opacity="0.65" transparent="true"></a-box>
-      <a-text value="EMBARQUE" position="3.6 0.18 5.5" rotation="-90 0 0" color="#ffffff" width="4"></a-text>
-
-      <!-- PASILLOS -->
-      <a-box position="0 0.09 -2" width="17" height="0.06" depth="0.45" color="#f39c12" opacity="0.25" transparent="true"></a-box>
-      <a-box position="0 0.09 2" width="17" height="0.06" depth="0.45" color="#f39c12" opacity="0.25" transparent="true"></a-box>
-
-      <!-- RACKS: FILA 1 -->
-      <a-entity id="RC01" class="rack" data-rack="RC01" position="-7 -0.0 -4"></a-entity>
-      <a-entity id="RC02" class="rack" data-rack="RC02" position="-4.5 -0.0 -4"></a-entity>
-      <a-entity id="RC03" class="rack" data-rack="RC03" position="-2 -0.0 -4"></a-entity>
-      <a-entity id="RC04" class="rack" data-rack="RC04" position="0.5 -0.0 -4"></a-entity>
-      <a-entity id="RC05" class="rack" data-rack="RC05" position="3 -0.0 -4"></a-entity>
-      <a-entity id="RC06" class="rack" data-rack="RC06" position="5.5 -0.0 -4"></a-entity>
-
-      <!-- RACKS: FILA 2 -->
-      <a-entity id="RC07" class="rack" data-rack="RC07" position="-7 -0.0 0"></a-entity>
-      <a-entity id="RC08" class="rack" data-rack="RC08" position="-4.5 -0.0 0"></a-entity>
-      <a-entity id="RC09" class="rack" data-rack="RC09" position="-2 -0.0 0"></a-entity>
-      <a-entity id="RC10" class="rack" data-rack="RC10" position="0.5 -0.0 0"></a-entity>
-      <a-entity id="RC11" class="rack" data-rack="RC11" position="3 -0.0 0"></a-entity>
-      <a-entity id="RC12" class="rack" data-rack="RC12" position="5.5 -0.0 0"></a-entity>
-
-      <!-- RACKS: FILA 3 -->
-      <a-entity id="RC13" class="rack" data-rack="RC13" position="-7 -0.0 4"></a-entity>
-      <a-entity id="RC14" class="rack" data-rack="RC14" position="-4.5 -0.0 4"></a-entity>
-      <a-entity id="RC15" class="rack" data-rack="RC15" position="-2 -0.0 4"></a-entity>
-      <a-entity id="RC16" class="rack" data-rack="RC16" position="0.5 -0.0 4"></a-entity>
-      <a-entity id="RC17" class="rack" data-rack="RC17" position="3 -0.0 4"></a-entity>
-      <a-entity id="RC18" class="rack" data-rack="RC18" position="5.5 -0.0 4"></a-entity>
-
-      <a-text
-        value="MiniWMS AR"
-        position="-8.3 0.25 -6.2"
+      <a-ring
+        position="0 0.028 0"
         rotation="-90 0 0"
+        radius-inner="0.50"
+        radius-outer="0.56"
         color="#4fc3f7"
-        width="5">
-      </a-text>
+        opacity="0.70"
+        transparent="true">
+      </a-ring>
 
+      <a-box
+        position="0 0.035 0"
+        width="1.05"
+        height="0.018"
+        depth="0.025"
+        color="#ffe000"
+        opacity="0.65"
+        transparent="true">
+      </a-box>
+
+      <a-box
+        position="0 0.036 0"
+        width="0.025"
+        height="0.018"
+        depth="1.05"
+        color="#ffe000"
+        opacity="0.65"
+        transparent="true">
+      </a-box>
+    </a-entity>
+
+    <a-entity
+      id="warehouse"
+      position="0 0.045 0"
+      rotation="0 0 0"
+      scale="0.060 0.060 0.060"
+      visible="true">
     </a-entity>
 
   </a-marker>
@@ -352,120 +308,398 @@ input:focus{
 
 <script>
 const rackInfo = {
-  RC01:{occ:18, cap:32, np:["98A1850","100506046"]},
-  RC02:{occ:24, cap:32, np:["99B5492","E7137200"]},
-  RC03:{occ:10, cap:32, np:["A1840","B7721"]},
-  RC04:{occ:26, cap:32, np:["98A1850","C5520"]},
-  RC05:{occ:31, cap:32, np:["100506046","D3301"]},
-  RC06:{occ:14, cap:32, np:["F9010","99B5492"]},
-  RC07:{occ:35, cap:50, np:["100506046","98A1850"]},
-  RC08:{occ:22, cap:50, np:["G1180","H7750"]},
-  RC09:{occ:47, cap:50, np:["E7137200","C5520"]},
-  RC10:{occ:40, cap:50, np:["100506046","99B5492"]},
-  RC11:{occ:12, cap:50, np:["J4500","K8810"]},
-  RC12:{occ:28, cap:50, np:["M3300","N9900"]},
-  RC13:{occ:8, cap:32, np:["P1100","Q5510"]},
-  RC14:{occ:30, cap:32, np:["100506046","98A1850"]},
-  RC15:{occ:19, cap:32, np:["R4400","S5521"]},
-  RC16:{occ:32, cap:32, np:["99B5492","E7137200"]},
-  RC17:{occ:5, cap:32, np:["T1010","U1120"]},
-  RC18:{occ:16, cap:32, np:["V2001","W8871"]}
+  RC01:{x:-7.5,z:-4.2,levels:4,bays:6,occ:18,cap:32,np:["98A1850","100506046"]},
+  RC02:{x:-5.0,z:-4.2,levels:4,bays:6,occ:24,cap:32,np:["99B5492","E7137200"]},
+  RC03:{x:-2.5,z:-4.2,levels:4,bays:6,occ:10,cap:32,np:["A1840","B7721"]},
+  RC04:{x:0.0,z:-4.2,levels:4,bays:6,occ:26,cap:32,np:["98A1850","C5520"]},
+  RC05:{x:2.5,z:-4.2,levels:4,bays:6,occ:31,cap:32,np:["100506046","D3301"]},
+  RC06:{x:5.0,z:-4.2,levels:4,bays:6,occ:14,cap:32,np:["F9010","99B5492"]},
+
+  RC07:{x:-7.5,z:0,levels:5,bays:8,occ:35,cap:50,np:["100506046","98A1850"]},
+  RC08:{x:-5.0,z:0,levels:5,bays:8,occ:22,cap:50,np:["G1180","H7750"]},
+  RC09:{x:-2.5,z:0,levels:5,bays:8,occ:47,cap:50,np:["E7137200","C5520"]},
+  RC10:{x:0.0,z:0,levels:5,bays:8,occ:40,cap:50,np:["100506046","99B5492"]},
+  RC11:{x:2.5,z:0,levels:5,bays:8,occ:12,cap:50,np:["J4500","K8810"]},
+  RC12:{x:5.0,z:0,levels:5,bays:8,occ:28,cap:50,np:["M3300","N9900"]},
+
+  RC13:{x:-7.5,z:4.2,levels:4,bays:6,occ:8,cap:32,np:["P1100","Q5510"]},
+  RC14:{x:-5.0,z:4.2,levels:4,bays:6,occ:30,cap:32,np:["100506046","98A1850"]},
+  RC15:{x:-2.5,z:4.2,levels:4,bays:6,occ:19,cap:32,np:["R4400","S5521"]},
+  RC16:{x:0.0,z:4.2,levels:4,bays:6,occ:32,cap:32,np:["99B5492","E7137200"]},
+  RC17:{x:2.5,z:4.2,levels:4,bays:6,occ:5,cap:32,np:["T1010","U1120"]},
+  RC18:{x:5.0,z:4.2,levels:4,bays:6,occ:16,cap:32,np:["V2001","W8871"]}
 };
 
-let scale = 0.055;
+let scale = 0.060;
 let rotationY = 0;
 let offsetX = 0;
 let offsetZ = 0;
 let heatmap = false;
 let warehouseVisible = true;
+let anchorVisible = true;
+let styleMode = "realista";
 
-function initRacks(){
+function createEntity(tag, attrs){
+  const el = document.createElement(tag);
+  Object.entries(attrs).forEach(([key,value]) => {
+    el.setAttribute(key,value);
+  });
+  return el;
+}
+
+function initWarehouse(){
+  const warehouse = document.getElementById("warehouse");
+  warehouse.innerHTML = "";
+
+  createFloor(warehouse);
+  createZones(warehouse);
+  createAisles(warehouse);
+  createDocks(warehouse);
+  createColumns(warehouse);
+
   Object.keys(rackInfo).forEach(id => {
-    const rack = document.getElementById(id);
-    const info = rackInfo[id];
+    createRack(warehouse, id, rackInfo[id]);
+  });
 
-    createRackVisual(rack, id, info);
+  const title = createEntity("a-text", {
+    value:"MiniWMS AR · CEVA Layout",
+    position:"-8.6 0.20 -6.7",
+    rotation:"-90 0 0",
+    color:"#4fc3f7",
+    width:"5.2"
+  });
+  warehouse.appendChild(title);
+}
+
+function createFloor(parent){
+  const floor = createEntity("a-box", {
+    position:"-1.25 0 0",
+    width:"18.6",
+    height:"0.08",
+    depth:"13.4",
+    color: styleMode === "holograma" ? "#061b35" : "#101a2d",
+    opacity: styleMode === "holograma" ? "0.55" : "0.92",
+    transparent:"true"
+  });
+  parent.appendChild(floor);
+
+  for(let x=-10; x<=8; x+=1){
+    parent.appendChild(createEntity("a-box", {
+      position:`${x} 0.045 0`,
+      width:"0.018",
+      height:"0.025",
+      depth:"12.8",
+      color:"#1b3660",
+      opacity: styleMode === "holograma" ? "0.45" : "0.22",
+      transparent:"true"
+    }));
+  }
+
+  for(let z=-6; z<=6; z+=1){
+    parent.appendChild(createEntity("a-box", {
+      position:`-1.25 0.046 ${z}`,
+      width:"18.2",
+      height:"0.025",
+      depth:"0.018",
+      color:"#1b3660",
+      opacity: styleMode === "holograma" ? "0.45" : "0.22",
+      transparent:"true"
+    }));
+  }
+}
+
+function createZones(parent){
+  addZone(parent,"RECIBO",-8.0,-6.0,3.2,0.9,"#16a085");
+  addZone(parent,"SURTIDO",4.6,-6.0,4.2,0.9,"#e67e22");
+  addZone(parent,"AUDITORIA",-8.0,6.0,3.5,0.9,"#9b59b6");
+  addZone(parent,"EMBARQUE",4.6,6.0,4.2,0.9,"#3498db");
+}
+
+function addZone(parent,label,x,z,w,d,color){
+  parent.appendChild(createEntity("a-box", {
+    position:`${x} 0.075 ${z}`,
+    width:w,
+    height:"0.07",
+    depth:d,
+    color:color,
+    opacity: styleMode === "holograma" ? "0.32" : "0.62",
+    transparent:"true"
+  }));
+
+  parent.appendChild(createEntity("a-text", {
+    value:label,
+    position:`${x - w/2 + 0.18} 0.18 ${z}`,
+    rotation:"-90 0 0",
+    color:"#ffffff",
+    width:"4"
+  }));
+}
+
+function createAisles(parent){
+  [-2.10,2.10].forEach(z => {
+    parent.appendChild(createEntity("a-box", {
+      position:`-1.25 0.09 ${z}`,
+      width:"18.0",
+      height:"0.05",
+      depth:"0.42",
+      color:"#f39c12",
+      opacity: styleMode === "holograma" ? "0.35" : "0.25",
+      transparent:"true"
+    }));
+  });
+
+  [-9.3,7.0].forEach(x => {
+    parent.appendChild(createEntity("a-box", {
+      position:`${x} 0.092 0`,
+      width:"0.36",
+      height:"0.05",
+      depth:"12.6",
+      color:"#4fc3f7",
+      opacity:"0.18",
+      transparent:"true"
+    }));
   });
 }
 
-function createRackVisual(parent, id, info){
+function createDocks(parent){
+  for(let i=0;i<4;i++){
+    const x = 2.8 + i*1.15;
+
+    parent.appendChild(createEntity("a-box", {
+      position:`${x} 0.25 -6.65`,
+      width:"0.85",
+      height:"0.42",
+      depth:"0.25",
+      color:"#34495e",
+      opacity:"0.96"
+    }));
+
+    parent.appendChild(createEntity("a-box", {
+      position:`${x} 0.55 -6.85`,
+      width:"0.75",
+      height:"0.48",
+      depth:"0.16",
+      color:"#4fc3f7",
+      opacity:"0.55",
+      transparent:"true"
+    }));
+  }
+}
+
+function createColumns(parent){
+  const columns = [
+    [-8.8,-5.0],[-3.5,-5.0],[2.0,-5.0],[6.5,-5.0],
+    [-8.8,1.4],[-3.5,1.4],[2.0,1.4],[6.5,1.4],
+    [-8.8,5.0],[-3.5,5.0],[2.0,5.0],[6.5,5.0]
+  ];
+
+  columns.forEach(([x,z]) => {
+    parent.appendChild(createEntity("a-cylinder", {
+      position:`${x} 0.48 ${z}`,
+      radius:"0.09",
+      height:"0.95",
+      color:"#566573",
+      opacity:"0.90"
+    }));
+  });
+}
+
+function createRack(parent,id,info){
+  const rack = createEntity("a-entity", {
+    id:id,
+    class:"rack",
+    position:`${info.x} 0 ${info.z}`
+  });
+
   const ratio = info.occ / info.cap;
-  const color = getRackColor(ratio);
+  const rackLength = info.bays * 0.26;
+  const rackHeight = info.levels * 0.28;
+  const rackDepth = 0.58;
 
-  const rackBody = document.createElement("a-box");
-  rackBody.setAttribute("position", "0 0.48 0");
-  rackBody.setAttribute("width", "1.6");
-  rackBody.setAttribute("height", "0.9");
-  rackBody.setAttribute("depth", "0.55");
-  rackBody.setAttribute("color", "#263f5e");
-  rackBody.setAttribute("opacity", "0.95");
-  rackBody.setAttribute("data-id", id);
-  parent.appendChild(rackBody);
+  const hit = createEntity("a-box", {
+    position:`0 ${rackHeight/2} 0`,
+    width:String(rackLength + 0.25),
+    height:String(rackHeight + 0.25),
+    depth:String(rackDepth + 0.28),
+    color:"#ffffff",
+    opacity:"0.001",
+    transparent:"true"
+  });
+  rack.appendChild(hit);
 
-  for(let i = 0; i < 4; i++){
-    const level = document.createElement("a-box");
-    level.setAttribute("position", `0 ${0.18 + i * 0.2} 0.31`);
-    level.setAttribute("width", "1.7");
-    level.setAttribute("height", "0.025");
-    level.setAttribute("depth", "0.04");
-    level.setAttribute("color", "#6f8cad");
-    parent.appendChild(level);
+  for(let i=0;i<=info.bays;i++){
+    const x = -rackLength/2 + i*(rackLength/info.bays);
+
+    [-rackDepth/2,rackDepth/2].forEach(z => {
+      rack.appendChild(createEntity("a-box", {
+        position:`${x} ${rackHeight/2} ${z}`,
+        width:"0.035",
+        height:String(rackHeight),
+        depth:"0.035",
+        color: styleMode === "holograma" ? "#4fc3f7" : "#6f8cad",
+        opacity: styleMode === "holograma" ? "0.72" : "1",
+        transparent: styleMode === "holograma" ? "true" : "false"
+      }));
+    });
   }
 
-  const fill = document.createElement("a-box");
-  fill.setAttribute("position", "0 0.28 0");
-  fill.setAttribute("width", String(1.45 * Math.max(0.1, ratio)));
-  fill.setAttribute("height", "0.22");
-  fill.setAttribute("depth", "0.42");
-  fill.setAttribute("color", color);
-  fill.setAttribute("opacity", "0.98");
-  fill.setAttribute("data-id", id);
-  parent.appendChild(fill);
+  for(let level=0;level<=info.levels;level++){
+    const y = level * 0.28;
 
-  const label = document.createElement("a-text");
-  label.setAttribute("value", id);
-  label.setAttribute("position", "-0.68 1.03 -0.38");
-  label.setAttribute("rotation", "-70 0 0");
-  label.setAttribute("color", "#ffffff");
-  label.setAttribute("width", "2.4");
-  parent.appendChild(label);
+    [-rackDepth/2,rackDepth/2].forEach(z => {
+      rack.appendChild(createEntity("a-box", {
+        position:`0 ${y} ${z}`,
+        width:String(rackLength + 0.08),
+        height:"0.030",
+        depth:"0.045",
+        color: styleMode === "holograma" ? "#4fc3f7" : "#4a6382",
+        opacity: styleMode === "holograma" ? "0.70" : "1",
+        transparent: styleMode === "holograma" ? "true" : "false"
+      }));
+    });
+  }
 
-  parent.addEventListener("click", () => selectRack(id));
+  let placed = 0;
+  const palletColor = getRackColor(ratio);
+
+  for(let level=0;level<info.levels;level++){
+    for(let bay=0;bay<info.bays;bay++){
+      if(placed >= info.occ) break;
+
+      const x = -rackLength/2 + (bay + 0.5) * (rackLength/info.bays);
+      const y = 0.10 + level * 0.28;
+      const z = bay % 2 === 0 ? -0.15 : 0.15;
+
+      rack.appendChild(createEntity("a-box", {
+        class:"pallet",
+        position:`${x} ${y} ${z}`,
+        width:"0.18",
+        height:"0.13",
+        depth:"0.24",
+        color:palletColor,
+        opacity: styleMode === "holograma" ? "0.58" : "0.95",
+        transparent: styleMode === "holograma" ? "true" : "false"
+      }));
+
+      placed++;
+    }
+  }
+
+  rack.appendChild(createEntity("a-text", {
+    value:id,
+    position:`${-rackLength/2} ${rackHeight + 0.10} ${-rackDepth/2 - 0.12}`,
+    rotation:"-65 0 0",
+    color:"#ffffff",
+    width:"2.2"
+  }));
+
+  rack.addEventListener("click", () => selectRack(id));
+  hit.addEventListener("click", () => selectRack(id));
+
+  parent.appendChild(rack);
 }
 
 function getRackColor(ratio){
-  if(!heatmap) return "#2ecc71";
+  if(!heatmap){
+    return styleMode === "holograma" ? "#00d9ff" : "#2ecc71";
+  }
+
   if(ratio >= 0.90) return "#e74c3c";
   if(ratio >= 0.70) return "#f39c12";
   return "#2ecc71";
 }
 
-function refreshRackColors(){
-  Object.keys(rackInfo).forEach(id => {
-    const rack = document.getElementById(id);
-    const info = rackInfo[id];
-    const ratio = info.occ / info.cap;
-    const color = getRackColor(ratio);
+function rebuildWarehouse(){
+  initWarehouse();
+}
 
-    const boxes = rack.querySelectorAll("a-box");
+function scaleWarehouse(mult){
+  scale = Math.max(0.020, Math.min(0.16, scale * mult));
+  applyTransform();
+  updateInfo(`Escala: <b>${scale.toFixed(3)}</b>`);
+}
 
-    boxes.forEach((box, index) => {
-      if(index === 5){
-        box.setAttribute("color", color);
-      }
-    });
-  });
+function rotateWarehouse(deg){
+  rotationY += deg;
+  applyTransform();
+}
+
+function moveWarehouse(dx,dz){
+  offsetX += dx;
+  offsetZ += dz;
+  applyTransform();
+
+  updateInfo(`Offset:<br>X: <b>${offsetX.toFixed(2)}</b> · Z: <b>${offsetZ.toFixed(2)}</b>`);
+}
+
+function applyTransform(){
+  const warehouse = document.getElementById("warehouse");
+  warehouse.setAttribute("scale",`${scale} ${scale} ${scale}`);
+  warehouse.setAttribute("rotation",`0 ${rotationY} 0`);
+  warehouse.setAttribute("position",`${offsetX} 0.045 ${offsetZ}`);
+}
+
+function resetWarehouse(){
+  scale = 0.060;
+  rotationY = 0;
+  offsetX = 0;
+  offsetZ = 0;
+  warehouseVisible = true;
+
+  const warehouse = document.getElementById("warehouse");
+  warehouse.setAttribute("visible","true");
+
+  applyTransform();
+  clearHighlight();
+
+  updateInfo("<b>Vista reiniciada.</b><br>Maqueta centrada sobre el marcador HIRO.");
+}
+
+function toggleWarehouse(){
+  warehouseVisible = !warehouseVisible;
+  document.getElementById("warehouse").setAttribute("visible",warehouseVisible ? "true" : "false");
+
+  updateInfo(warehouseVisible ? "<b>Almacén visible.</b>" : "<b>Almacén oculto.</b>");
+}
+
+function toggleAnchor(){
+  anchorVisible = !anchorVisible;
+  document.getElementById("anchorGroup").setAttribute("visible",anchorVisible ? "true" : "false");
+
+  updateInfo(anchorVisible ? "<b>Base AR visible.</b>" : "<b>Base AR oculta.</b>");
+}
+
+function toggleHeatmap(){
+  heatmap = !heatmap;
+  rebuildWarehouse();
+
+  updateInfo(
+    heatmap
+      ? "<b>Ocupación activa.</b><br>Verde bajo, naranja alto, rojo crítico."
+      : "<b>Ocupación apagada.</b><br>Color visual simplificado."
+  );
+}
+
+function toggleStyleMode(){
+  styleMode = styleMode === "realista" ? "holograma" : "realista";
+  rebuildWarehouse();
+
+  updateInfo(
+    styleMode === "holograma"
+      ? "<b>Modo holograma activo.</b><br>Más transparencia y brillo azul."
+      : "<b>Modo realista activo.</b><br>Racks más sólidos y visual operativo."
+  );
 }
 
 function selectRack(id){
-  clearHighlight();
+  clearHighlight(false);
 
   const rack = document.getElementById(id);
   const info = rackInfo[id];
 
   rack.querySelectorAll("a-box").forEach(box => {
-    box.setAttribute("emissive", "#ffe000");
-    box.setAttribute("emissiveIntensity", "0.45");
+    box.setAttribute("emissive","#ffe000");
+    box.setAttribute("emissiveIntensity","0.55");
   });
 
   updateInfo(
@@ -475,92 +709,26 @@ function selectRack(id){
   );
 }
 
-function clearHighlight(){
+function clearHighlight(showMsg=true){
   document.querySelectorAll(".rack a-box").forEach(box => {
     box.removeAttribute("emissive");
     box.removeAttribute("emissiveIntensity");
   });
 
-  updateInfo("<b>Resaltado limpio.</b><br>Selecciona un rack o busca un NP.");
-}
-
-function scaleWarehouse(mult){
-  scale = Math.max(0.015, Math.min(0.16, scale * mult));
-  applyTransform();
-
-  updateInfo(`Escala: <b>${scale.toFixed(3)}</b>`);
-}
-
-function rotateWarehouse(deg){
-  rotationY += deg;
-  applyTransform();
-}
-
-function moveWarehouse(dx, dz){
-  offsetX += dx;
-  offsetZ += dz;
-  applyTransform();
-
-  updateInfo(
-    `Offset:<br>` +
-    `X: <b>${offsetX.toFixed(2)}</b> · Z: <b>${offsetZ.toFixed(2)}</b>`
-  );
-}
-
-function applyTransform(){
-  const warehouse = document.getElementById("warehouse");
-  warehouse.setAttribute("scale", `${scale} ${scale} ${scale}`);
-  warehouse.setAttribute("rotation", `0 ${rotationY} 0`);
-  warehouse.setAttribute("position", `${offsetX} 0.04 ${offsetZ}`);
-}
-
-function resetWarehouse(){
-  scale = 0.055;
-  rotationY = 0;
-  offsetX = 0;
-  offsetZ = 0;
-  warehouseVisible = true;
-
-  const warehouse = document.getElementById("warehouse");
-  warehouse.setAttribute("visible", "true");
-
-  applyTransform();
-  clearHighlight();
-
-  updateInfo("<b>Vista reiniciada.</b><br>La maqueta volvió al centro del HIRO.");
-}
-
-function toggleWarehouse(){
-  warehouseVisible = !warehouseVisible;
-  document.getElementById("warehouse").setAttribute("visible", warehouseVisible ? "true" : "false");
-
-  updateInfo(
-    warehouseVisible
-      ? "<b>Almacén visible.</b>"
-      : "<b>Almacén oculto.</b> Solo queda el pin/base de referencia."
-  );
-}
-
-function toggleHeatmap(){
-  heatmap = !heatmap;
-  refreshRackColors();
-
-  updateInfo(
-    heatmap
-      ? "<b>Ocupación activa.</b><br>Verde bajo, naranja alto, rojo crítico."
-      : "<b>Ocupación apagada.</b><br>Vista simple."
-  );
+  if(showMsg){
+    updateInfo("<b>Resaltado limpio.</b><br>Puedes seleccionar un rack o buscar un NP.");
+  }
 }
 
 function highlightRoute(){
-  clearHighlight();
+  clearHighlight(false);
 
   ["RC07","RC10","RC14","RC16"].forEach(id => {
     const rack = document.getElementById(id);
 
     rack.querySelectorAll("a-box").forEach(box => {
-      box.setAttribute("emissive", "#ffe000");
-      box.setAttribute("emissiveIntensity", "0.55");
+      box.setAttribute("emissive","#ffe000");
+      box.setAttribute("emissiveIntensity","0.60");
     });
   });
 
@@ -577,31 +745,27 @@ function searchRack(){
 
   const hits = Object.keys(rackInfo).filter(id => {
     const info = rackInfo[id];
-
     return id.includes(q) || info.np.some(np => np.includes(q));
   });
 
   if(!hits.length){
-    clearHighlight();
+    clearHighlight(false);
     updateInfo(`No encontré: <b>${q}</b>`);
     return;
   }
 
-  clearHighlight();
+  clearHighlight(false);
 
   hits.forEach(id => {
     const rack = document.getElementById(id);
 
     rack.querySelectorAll("a-box").forEach(box => {
-      box.setAttribute("emissive", "#ffe000");
-      box.setAttribute("emissiveIntensity", "0.55");
+      box.setAttribute("emissive","#ffe000");
+      box.setAttribute("emissiveIntensity","0.60");
     });
   });
 
-  updateInfo(
-    `Resultado para <b>${q}</b>:<br>` +
-    hits.join(", ")
-  );
+  updateInfo(`Resultado para <b>${q}</b>:<br>${hits.join(", ")}`);
 }
 
 function updateInfo(html){
@@ -619,7 +783,7 @@ function showControls(){
 }
 
 window.addEventListener("load", () => {
-  initRacks();
+  initWarehouse();
 
   const marker = document.getElementById("hiroMarker");
   const status = document.getElementById("status");
@@ -630,7 +794,7 @@ window.addEventListener("load", () => {
 
     updateInfo(
       "<b>Marcador detectado.</b><br>" +
-      "Si ves la base azul, el pin y los racks, ya estamos en la base correcta."
+      "V6 visual activa. Ya estamos sobre una base más realista del almacén."
     );
   });
 
