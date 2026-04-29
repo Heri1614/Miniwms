@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.1 Espejo Pro</title>
+<title>MiniWMS AR · V8.2 Espejo Pro FIX</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -211,7 +211,7 @@ button.red{border-color:#e74c3c;color:#ff9999}
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.1 Espejo Pro</h1>
+  <h1>🏭 MiniWMS AR · V8.2 Espejo Pro FIX</h1>
   <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y búsqueda</p>
 </div>
 
@@ -246,7 +246,7 @@ button.red{border-color:#e74c3c;color:#ff9999}
   </div>
 
   <div class="searchRow">
-    <input id="searchInput" placeholder="Buscar: RC07, RC07-3-05, 98A1850" onkeydown="if(event.key==='Enter')searchTarget()">
+    <input id="searchInput" placeholder="BUSCAR: RC07, RC07-3-05, 98A1850" onkeydown="if(event.key==='Enter')searchTarget()">
     <button class="primary" onclick="searchTarget()">Buscar</button>
   </div>
 
@@ -513,8 +513,8 @@ function addArrow(parent,x,z){
 
   parent.appendChild(E('a-cone', {
     position:`${x+0.24} 0.11 ${z}`,
-    radius-bottom:'0.08',
-    radius-top:'0',
+    'radius-bottom':'0.08',
+    'radius-top':'0',
     height:'0.16',
     rotation:'0 0 -90',
     color:'#f5b041',
@@ -1231,22 +1231,27 @@ document.addEventListener('touchend', function(){
 }, {passive:true});
 
 window.addEventListener('load', () => {
-  buildWarehouse();
-  applyTransforms();
+  try{
+    buildWarehouse();
+    applyTransforms();
 
-  const marker = document.getElementById('hiroMarker');
-  const status = document.getElementById('status');
+    const marker = document.getElementById('hiroMarker');
+    const status = document.getElementById('status');
 
-  marker.addEventListener('markerFound', () => {
-    status.textContent = 'Marcador detectado · MiniWMS AR activo';
-    status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.1 activa: búsqueda corregida, gestos táctiles y selección por pantalla.');
-  });
+    marker.addEventListener('markerFound', () => {
+      status.textContent = 'Marcador detectado · MiniWMS AR activo';
+      status.classList.add('ok');
+      updateInfo('<b>Marcador detectado.</b><br>V8.2 activa: búsqueda corregida, gestos táctiles y selección por pantalla.');
+    });
 
-  marker.addEventListener('markerLost', () => {
-    status.textContent = 'Buscando marcador HIRO...';
-    status.classList.remove('ok');
-  });
+    marker.addEventListener('markerLost', () => {
+      status.textContent = 'Buscando marcador HIRO...';
+      status.classList.remove('ok');
+    });
+  }catch(err){
+    console.error(err);
+    updateInfo('<b>Error al cargar:</b><br>' + err.message);
+  }
 });
 </script>
 
