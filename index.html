@@ -3,19 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8 Espejo Pro</title>
+<title>MiniWMS AR · V8.1 Espejo Pro</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+
 body{
   overflow:hidden;
   background:#02040a;
   font-family:'Segoe UI',Arial,sans-serif;
   color:#e0eaff;
 }
+
 #topbar{
   position:fixed;
   top:0;left:0;right:0;
@@ -26,6 +28,7 @@ body{
   border-bottom:1px solid rgba(79,195,247,.30);
   backdrop-filter:blur(10px);
 }
+
 #topbar h1{
   font-size:15px;
   color:#4fc3f7;
@@ -33,11 +36,13 @@ body{
   letter-spacing:.4px;
   line-height:1.1;
 }
+
 #topbar p{
   margin-top:2px;
   font-size:10.5px;
   color:#7fb3e0;
 }
+
 #status{
   position:fixed;
   top:68px;
@@ -55,11 +60,13 @@ body{
   box-shadow:0 8px 24px rgba(0,0,0,.42);
   backdrop-filter:blur(8px);
 }
+
 #status.ok{
   background:rgba(7,88,48,.94);
   border-color:#2ecc71;
   color:#55efc4;
 }
+
 #controls{
   position:fixed;
   left:12px;
@@ -72,8 +79,21 @@ body{
   border:1px solid #1b3660;
   box-shadow:0 14px 36px rgba(0,0,0,.50);
   backdrop-filter:blur(10px);
+  max-height:74vh;
+  overflow-y:auto;
 }
+
+#controls::-webkit-scrollbar{
+  width:4px;
+}
+
+#controls::-webkit-scrollbar-thumb{
+  background:#1b3660;
+  border-radius:4px;
+}
+
 #controls.hidden{display:none}
+
 #showControls{
   position:fixed;
   left:50%;
@@ -90,19 +110,23 @@ body{
   font-weight:800;
   box-shadow:0 8px 22px rgba(0,0,0,.45);
 }
+
 #showControls.show{display:block}
+
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:10px;
   margin-bottom:10px;
 }
+
 .mini-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:8px;
   margin-bottom:10px;
 }
+
 button{
   width:100%;
   padding:12px 8px;
@@ -113,19 +137,24 @@ button{
   font-size:12.5px;
   font-weight:700;
 }
+
 button:active{transform:scale(.98)}
 button.primary{border-color:#4fc3f7;color:#4fc3f7}
 button.green{border-color:#2ecc71;color:#55efc4}
 button.orange{border-color:#f39c12;color:#f5b041}
 button.purple{border-color:#9b59b6;color:#d7b4ea}
 button.red{border-color:#e74c3c;color:#ff9999}
+
 .searchRow{
   display:flex;
   gap:8px;
   margin-top:6px;
+  align-items:center;
 }
-input{
-  flex:1;
+
+.searchRow input{
+  flex:1 1 auto;
+  width:100%;
   min-width:0;
   padding:12px 10px;
   border-radius:12px;
@@ -134,8 +163,22 @@ input{
   color:#e0eaff;
   font-size:13px;
   outline:none;
+  direction:ltr;
+  unicode-bidi:plaintext;
+  text-align:left;
+  text-transform:uppercase;
 }
-input:focus{border-color:#4fc3f7}
+
+.searchRow input:focus{
+  border-color:#4fc3f7;
+}
+
+.searchRow button{
+  flex:0 0 92px;
+  width:92px;
+  min-width:92px;
+}
+
 #info{
   margin-top:10px;
   padding:10px 12px;
@@ -146,15 +189,21 @@ input:focus{border-color:#4fc3f7}
   font-size:12.2px;
   line-height:1.55;
 }
+
 #info b{color:#4fc3f7}
+
 #hint{
   margin-top:7px;
   color:#7fb3e0;
   font-size:10px;
   line-height:1.55;
 }
+
 @media(max-width:420px){
-  .mini-grid button{padding:10px 4px;font-size:12px}
+  .mini-grid button{
+    padding:10px 4px;
+    font-size:12px;
+  }
 }
 </style>
 </head>
@@ -162,7 +211,7 @@ input:focus{border-color:#4fc3f7}
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8 Espejo Pro</h1>
+  <h1>🏭 MiniWMS AR · V8.1 Espejo Pro</h1>
   <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y búsqueda</p>
 </div>
 
@@ -197,7 +246,7 @@ input:focus{border-color:#4fc3f7}
   </div>
 
   <div class="searchRow">
-    <input id="searchInput" placeholder="Buscar rack, local o NP. Ej: RC07, RC07-3-05, 98A1850" onkeydown="if(event.key==='Enter')searchTarget()">
+    <input id="searchInput" placeholder="Buscar: RC07, RC07-3-05, 98A1850" onkeydown="if(event.key==='Enter')searchTarget()">
     <button class="primary" onclick="searchTarget()">Buscar</button>
   </div>
 
@@ -207,7 +256,7 @@ input:focus{border-color:#4fc3f7}
 
   <div id="hint">
     Prueba: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.  
-    Si se pone lento, toca <b>Detalle</b>.
+    Si se pone lento, toca <b>Detalle</b>. Con controles ocultos: 1 dedo gira, 2 dedos acercan/desplazan.
   </div>
 
   <div style="margin-top:10px">
@@ -238,7 +287,11 @@ input:focus{border-color:#4fc3f7}
 
   </a-marker>
 
-  <a-entity camera></a-entity>
+  <a-entity
+    camera
+    cursor="rayOrigin: mouse"
+    raycaster="objects: .pickable">
+  </a-entity>
 </a-scene>
 
 <script>
@@ -439,7 +492,6 @@ function buildAisles(parent){
     }));
   });
 
-  // Flechas de flujo
   if(highDetail){
     [
       [-9.2,-2.35],[-6.5,-2.35],[-3.8,-2.35],[-1.1,-2.35],[1.6,-2.35],[4.3,-2.35],
@@ -458,10 +510,11 @@ function addArrow(parent,x,z){
     opacity:'0.42',
     transparent:'true'
   }));
+
   parent.appendChild(E('a-cone', {
     position:`${x+0.24} 0.11 ${z}`,
-    radiusBottom:'0.08',
-    radiusTop:'0',
+    radius-bottom:'0.08',
+    radius-top:'0',
     height:'0.16',
     rotation:'0 0 -90',
     color:'#f5b041',
@@ -589,6 +642,7 @@ function buildSafetyItems(parent){
     depth:'0.15',
     color:'#e74c3c'
   }));
+
   parent.appendChild(E('a-text', {
     value:'EXIT',
     position:'-10.92 0.47 5.92',
@@ -604,6 +658,7 @@ function buildSafetyItems(parent){
     depth:'0.15',
     color:'#2ecc71'
   }));
+
   parent.appendChild(E('a-text', {
     value:'+',
     position:'6.89 0.47 -5.80',
@@ -612,7 +667,6 @@ function buildSafetyItems(parent){
     width:'1.2'
   }));
 
-  // Montacargas pequeño
   parent.appendChild(E('a-box', {
     position:'-9.8 0.18 -6.05',
     width:'0.45',
@@ -620,6 +674,7 @@ function buildSafetyItems(parent){
     depth:'0.28',
     color:'#f39c12'
   }));
+
   parent.appendChild(E('a-box', {
     position:'-9.45 0.30 -6.05',
     width:'0.06',
@@ -630,7 +685,11 @@ function buildSafetyItems(parent){
 }
 
 function buildRack(parent,rack){
-  const group = E('a-entity', { id:rack.id, position:`${rack.x} 0 ${rack.z}` });
+  const group = E('a-entity', {
+    id:rack.id,
+    class:'pickable',
+    position:`${rack.x} 0 ${rack.z}`
+  });
 
   const ratio = rack.occ / rack.cap;
   const width = rack.bays * 0.265;
@@ -640,7 +699,20 @@ function buildRack(parent,rack){
   const fColor = frameColor(ratio);
   const pColor = palletColor(ratio);
 
-  // Huella/sombra
+  const hitBox = E('a-box', {
+    class:'pickable',
+    position:`0 ${height/2} 0`,
+    width:String(width + 0.35),
+    height:String(height + 0.35),
+    depth:String(depth + 0.35),
+    color:'#ffffff',
+    opacity:'0.001',
+    transparent:'true'
+  });
+
+  hitBox.addEventListener('click', () => highlightRack(rack.id));
+  group.appendChild(hitBox);
+
   group.appendChild(E('a-box', {
     position:'0 0.03 0',
     width:String(width + 0.16),
@@ -651,7 +723,6 @@ function buildRack(parent,rack){
     transparent:'true'
   }));
 
-  // Postes
   for(let i=0;i<=rack.bays;i++){
     const x = -width/2 + i*(width/rack.bays);
     [-depth/2, depth/2].forEach(z => {
@@ -667,7 +738,6 @@ function buildRack(parent,rack){
     });
   }
 
-  // Largueros
   for(let lv=0;lv<=rack.levels;lv++){
     const y = lv*levelGap + 0.04;
     [-depth/2, depth/2].forEach(z => {
@@ -683,7 +753,6 @@ function buildRack(parent,rack){
     });
   }
 
-  // Profundidad / cruceta central
   if(highDetail){
     group.appendChild(E('a-box', {
       position:`0 ${height/2} 0`,
@@ -705,7 +774,6 @@ function buildRack(parent,rack){
       const cellY = (lv - 0.5)*levelGap + 0.06;
       const frontZ = -depth/2 - 0.02;
 
-      // Cara del local
       if(highDetail){
         group.appendChild(E('a-box', {
           position:`${localX} ${cellY} ${frontZ}`,
@@ -938,8 +1006,16 @@ function highlightLocal(rackId,level,bay){
   );
 }
 
+function normalizeSearch(text){
+  return text
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g,'')
+    .replace(/[–—]/g,'-');
+}
+
 function searchTarget(){
-  const q = document.getElementById('searchInput').value.trim().toUpperCase();
+  const q = normalizeSearch(document.getElementById('searchInput').value);
 
   if(!q){
     updateInfo('Escribe un rack, local o NP demo.');
@@ -1066,6 +1142,94 @@ function showControls(){
   document.getElementById('showControls').classList.remove('show');
 }
 
+/* Gestos táctiles */
+let gestureState = {
+  mode:null,
+  lastX:0,
+  lastY:0,
+  lastDistance:0,
+  lastMidX:0,
+  lastMidY:0
+};
+
+function isTouchingUI(target){
+  return !!target.closest('#controls, #showControls, #topbar, #status, input, button');
+}
+
+function getTouchDistance(t1,t2){
+  const dx = t1.clientX - t2.clientX;
+  const dy = t1.clientY - t2.clientY;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+function getMidpoint(t1,t2){
+  return {
+    x:(t1.clientX + t2.clientX) / 2,
+    y:(t1.clientY + t2.clientY) / 2
+  };
+}
+
+document.addEventListener('touchstart', function(e){
+  if(isTouchingUI(e.target)) return;
+
+  if(e.touches.length === 1){
+    gestureState.mode = 'rotate';
+    gestureState.lastX = e.touches[0].clientX;
+    gestureState.lastY = e.touches[0].clientY;
+  }
+
+  if(e.touches.length === 2){
+    gestureState.mode = 'pinch';
+    gestureState.lastDistance = getTouchDistance(e.touches[0], e.touches[1]);
+
+    const mid = getMidpoint(e.touches[0], e.touches[1]);
+    gestureState.lastMidX = mid.x;
+    gestureState.lastMidY = mid.y;
+  }
+}, {passive:false});
+
+document.addEventListener('touchmove', function(e){
+  if(isTouchingUI(e.target)) return;
+
+  if(gestureState.mode === 'rotate' && e.touches.length === 1){
+    e.preventDefault();
+
+    const x = e.touches[0].clientX;
+    const dx = x - gestureState.lastX;
+
+    if(Math.abs(dx) > 2){
+      rotateWarehouse(dx * 0.18);
+      gestureState.lastX = x;
+    }
+  }
+
+  if(gestureState.mode === 'pinch' && e.touches.length === 2){
+    e.preventDefault();
+
+    const distance = getTouchDistance(e.touches[0], e.touches[1]);
+    const ratio = distance / gestureState.lastDistance;
+
+    if(ratio > 1.015 || ratio < 0.985){
+      scaleWarehouse(ratio);
+      gestureState.lastDistance = distance;
+    }
+
+    const mid = getMidpoint(e.touches[0], e.touches[1]);
+    const dx = mid.x - gestureState.lastMidX;
+    const dy = mid.y - gestureState.lastMidY;
+
+    if(Math.abs(dx) > 2 || Math.abs(dy) > 2){
+      moveWarehouse(dx * 0.0025, dy * 0.0025);
+      gestureState.lastMidX = mid.x;
+      gestureState.lastMidY = mid.y;
+    }
+  }
+}, {passive:false});
+
+document.addEventListener('touchend', function(){
+  gestureState.mode = null;
+}, {passive:true});
+
 window.addEventListener('load', () => {
   buildWarehouse();
   applyTransforms();
@@ -1076,7 +1240,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado · MiniWMS AR activo';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8 activa: layout más cercano al MiniWMS original.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.1 activa: búsqueda corregida, gestos táctiles y selección por pantalla.');
   });
 
   marker.addEventListener('markerLost', () => {
