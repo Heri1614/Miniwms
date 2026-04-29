@@ -3,23 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V10 Full Screen</title>
+<title>MiniWMS AR · V10.1 Cámara Limpia</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
 
 <style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
+*{box-sizing:border-box;margin:0;padding:0}
 
 html,body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#1a1a1a;
+  background:transparent;
   font-family:'Segoe UI',Arial,sans-serif;
   color:#e0eaff;
   -webkit-user-select:none;
@@ -30,41 +26,40 @@ body{
   touch-action:none;
 }
 
-/* pantalla limpia: nada arriba */
+/* Solo indicador pequeño, no tapa cámara */
 #miniStatus{
   position:fixed;
-  top:10px;
-  left:10px;
-  z-index:60;
+  top:12px;
+  left:12px;
+  z-index:80;
   width:12px;
   height:12px;
   border-radius:50%;
   background:#e74c3c;
   box-shadow:0 0 12px #e74c3c;
-  opacity:.85;
 }
 
 #miniStatus.ok{
   background:#55efc4;
-  box-shadow:0 0 12px #55efc4;
+  box-shadow:0 0 14px #55efc4;
 }
 
-/* botón flotante pequeño */
+/* Botón flotante inferior */
 #showControls{
   position:fixed;
   left:50%;
   bottom:18px;
   transform:translateX(-50%);
-  z-index:80;
-  padding:12px 26px;
+  z-index:90;
+  padding:12px 28px;
   border-radius:999px;
   border:1px solid #4fc3f7;
-  background:rgba(5,10,22,.94);
+  background:rgba(5,10,22,.88);
   color:#4fc3f7;
   font-size:17px;
   font-weight:800;
-  box-shadow:0 12px 32px rgba(0,0,0,.55);
-  backdrop-filter:blur(12px);
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+  backdrop-filter:blur(10px);
 }
 
 #showControls.hidden{
@@ -76,14 +71,14 @@ body{
   left:12px;
   right:12px;
   bottom:12px;
-  z-index:90;
+  z-index:100;
   padding:12px;
   border-radius:18px;
-  background:rgba(5,10,22,.96);
+  background:rgba(5,10,22,.94);
   border:1px solid #1b3660;
-  box-shadow:0 18px 46px rgba(0,0,0,.62);
+  box-shadow:0 18px 46px rgba(0,0,0,.55);
   backdrop-filter:blur(14px);
-  max-height:72vh;
+  max-height:68vh;
   overflow-y:auto;
   display:none;
 }
@@ -103,18 +98,18 @@ body{
 
 .panelTitle{
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   gap:10px;
-  margin-bottom:10px;
   padding:4px 4px 10px;
+  margin-bottom:10px;
   border-bottom:1px solid #1b3660;
 }
 
 .panelTitle h1{
   font-size:15px;
   color:#4fc3f7;
-  letter-spacing:.8px;
+  letter-spacing:.7px;
 }
 
 .panelTitle p{
@@ -246,8 +241,8 @@ a-scene{
 <div id="controls">
   <div class="panelTitle">
     <div>
-      <h1>🏭 MiniWMS AR · V10</h1>
-      <p>Full screen · paleta real MiniWMS</p>
+      <h1>🏭 MiniWMS AR · V10.1</h1>
+      <p>Cámara limpia · paleta MiniWMS</p>
     </div>
     <button class="danger" style="width:70px;min-height:34px" onclick="hidePanel()">Cerrar</button>
   </div>
@@ -300,36 +295,27 @@ a-scene{
 
   <a-marker id="marker" preset="hiro" emitevents="true">
 
-    <a-entity id="arRoot" position="0 0.035 0" rotation="0 0 0" scale="0.58 0.58 0.58">
+    <a-entity id="arRoot" position="0 0.025 0" rotation="0 0 0" scale="0.46 0.46 0.46">
 
       <a-entity id="baseGroup">
-        <a-box
-          position="0 -0.022 0"
-          width="4.9"
-          height="0.035"
-          depth="3.05"
+        <!-- Base transparente: ya no tapa cámara -->
+        <a-plane
+          position="0 0.004 0"
+          width="4.7"
+          height="2.85"
+          rotation="-90 0 0"
           color="#050a16"
-          opacity="0.94"
+          opacity="0.34"
           transparent="true">
-        </a-box>
-
-        <a-box
-          position="0 -0.001 0"
-          width="4.95"
-          height="0.008"
-          depth="3.10"
-          color="#1b3660"
-          opacity="0.78"
-          transparent="true">
-        </a-box>
+        </a-plane>
 
         <a-ring
-          position="0 0.018 0"
+          position="0 0.016 0"
           rotation="-90 0 0"
-          radius-inner="0.44"
+          radius-inner="0.43"
           radius-outer="0.49"
           color="#4fc3f7"
-          opacity="0.38"
+          opacity="0.42"
           transparent="true">
         </a-ring>
       </a-entity>
@@ -339,7 +325,6 @@ a-scene{
       <a-entity id="racks"></a-entity>
       <a-entity id="route"></a-entity>
       <a-entity id="labels"></a-entity>
-      <a-entity id="highlight"></a-entity>
 
     </a-entity>
   </a-marker>
@@ -370,7 +355,7 @@ const inventory = {
 };
 
 const state = {
-  scale:0.58,
+  scale:0.46,
   rotY:0,
   x:0,
   z:0,
@@ -398,7 +383,6 @@ const labelsEl = document.getElementById('labels');
 const routeEl = document.getElementById('route');
 const zonesEl = document.getElementById('zones');
 const gridEl = document.getElementById('floorGrid');
-const highlightEl = document.getElementById('highlight');
 const baseGroup = document.getElementById('baseGroup');
 const info = document.getElementById('info');
 const miniStatus = document.getElementById('miniStatus');
@@ -417,7 +401,7 @@ function setInfo(html){
 }
 
 function applyTransform(){
-  root.setAttribute('position', `${state.x} 0.035 ${state.z}`);
+  root.setAttribute('position', `${state.x} 0.025 ${state.z}`);
   root.setAttribute('rotation', `0 ${state.rotY} 0`);
   root.setAttribute('scale', `${state.scale} ${state.scale} ${state.scale}`);
 }
@@ -435,17 +419,17 @@ function updateMode(){
     if(state.mode === 'occupancy'){
       if(local.reserved){
         el.setAttribute('color','#e74c3c');
-        el.setAttribute('opacity','.95');
+        el.setAttribute('opacity','.92');
       }else if(local.occupied){
         el.setAttribute('color','#55efc4');
-        el.setAttribute('opacity','.88');
+        el.setAttribute('opacity','.82');
       }else{
         el.setAttribute('color','#1b3660');
-        el.setAttribute('opacity','.48');
+        el.setAttribute('opacity','.34');
       }
     }else{
       el.setAttribute('color', local.occupied ? '#1e3c6e' : '#0e1e38');
-      el.setAttribute('opacity', local.occupied ? '.92' : '.52');
+      el.setAttribute('opacity', local.occupied ? '.74' : '.28');
     }
   });
 
@@ -453,7 +437,7 @@ function updateMode(){
     const selected = state.selectedRack === r.id;
     r.parts.forEach(p=>{
       p.setAttribute('color', selected ? '#4fc3f7' : '#5f7284');
-      p.setAttribute('opacity', selected ? '1' : '.95');
+      p.setAttribute('opacity', selected ? '.95' : '.70');
     });
 
     r.labelBox.setAttribute('color', selected ? '#0e3060' : '#08111e');
@@ -463,6 +447,7 @@ function updateMode(){
   routeEl.setAttribute('visible', state.route ? 'true' : 'false');
   baseGroup.setAttribute('visible', state.base ? 'true' : 'false');
   labelsEl.setAttribute('visible', state.labels ? 'true' : 'false');
+  gridEl.setAttribute('visible', state.detail ? 'true' : 'false');
 
   if(state.selectedLocal){
     const l = localMap[state.selectedLocal];
@@ -487,23 +472,23 @@ function build(){
 function buildGrid(){
   gridEl.innerHTML = '';
 
-  for(let x=-2.35;x<=2.35;x+=0.35){
+  for(let x=-2.25;x<=2.25;x+=0.35){
     gridEl.appendChild(E('a-box',{
-      position:`${x} 0.004 0`,
+      position:`${x} 0.010 0`,
       width:'0.006',
-      height:'0.004',
-      depth:'2.85',
+      height:'0.006',
+      depth:'2.65',
       color:'#1b3660',
       opacity:'.34',
       transparent:'true'
     }));
   }
 
-  for(let z=-1.35;z<=1.35;z+=0.35){
+  for(let z=-1.25;z<=1.25;z+=0.35){
     gridEl.appendChild(E('a-box',{
-      position:`0 0.005 ${z}`,
-      width:'4.65',
-      height:'0.004',
+      position:`0 0.011 ${z}`,
+      width:'4.45',
+      height:'0.006',
       depth:'0.006',
       color:'#1b3660',
       opacity:'.34',
@@ -513,12 +498,12 @@ function buildGrid(){
 
   [-0.35,0.25].forEach(z=>{
     gridEl.appendChild(E('a-box',{
-      position:`0 0.012 ${z}`,
-      width:'4.25',
+      position:`0 0.018 ${z}`,
+      width:'4.05',
       height:'0.012',
       depth:'0.045',
       color:'#f39c12',
-      opacity:'.54',
+      opacity:'.48',
       transparent:'true'
     }));
   });
@@ -527,26 +512,28 @@ function buildGrid(){
 function buildZones(){
   zonesEl.innerHTML = '';
 
-  addZone('RECIBO',-2.02,-1.33,.55,.20,'#55efc4');
-  addZone('SURTIDO', 2.02,-1.33,.62,.20,'#f39c12');
-  addZone('AUDITORÍA',-2.02,1.14,.66,.20,'#9b59b6');
-  addZone('EMBARQUE',2.02,1.14,.68,.20,'#4fc3f7');
+  addZone('RECIBO',-2.02,-1.30,.55,.20,'#55efc4');
+  addZone('SURTIDO', 2.02,-1.30,.62,.20,'#f39c12');
+  addZone('AUDITORÍA',-2.02,1.10,.66,.20,'#9b59b6');
+  addZone('EMBARQUE',2.02,1.10,.68,.20,'#4fc3f7');
 
   for(let i=0;i<4;i++){
     zonesEl.appendChild(E('a-box',{
-      position:`${1.05+i*.32} 0.07 -1.50`,
+      position:`${1.05+i*.32} 0.08 -1.48`,
       width:'.24',
-      height:'.14',
+      height:'.13',
       depth:'.12',
-      color:'#596b80'
+      color:'#596b80',
+      opacity:'.72',
+      transparent:'true'
     }));
     zonesEl.appendChild(E('a-box',{
-      position:`${1.05+i*.32} 0.17 -1.58`,
+      position:`${1.05+i*.32} 0.17 -1.56`,
       width:'.22',
-      height:'.17',
+      height:'.16',
       depth:'.05',
       color:'#4fc3f7',
-      opacity:'.42',
+      opacity:'.36',
       transparent:'true'
     }));
   }
@@ -554,18 +541,18 @@ function buildZones(){
 
 function addZone(label,x,z,w,d,color){
   zonesEl.appendChild(E('a-box',{
-    position:`${x} 0.016 ${z}`,
+    position:`${x} 0.020 ${z}`,
     width:w,
     height:'.016',
     depth:d,
     color,
-    opacity:'.62',
+    opacity:'.46',
     transparent:'true'
   }));
 
   const text = E('a-text',{
     value:label,
-    position:`${x-w/2+.04} .052 ${z}`,
+    position:`${x-w/2+.04} .058 ${z}`,
     rotation:'-90 0 0',
     color:'#e0eaff',
     width:'1.8'
@@ -579,8 +566,8 @@ function buildRack(def){
 
   const rackWidth = .78;
   const rackDepth = .22;
-  const rackHeight = .78;
-  const levelGap = .15;
+  const rackHeight = .74;
+  const levelGap = .142;
   const bayWidth = rackWidth / def.bays;
   const parts = [];
   const localIds = [];
@@ -588,9 +575,9 @@ function buildRack(def){
 
   const hit = E('a-box',{
     position:`0 ${rackHeight/2} 0`,
-    width:`${rackWidth+.16}`,
-    height:`${rackHeight+.20}`,
-    depth:`${rackDepth+.20}`,
+    width:`${rackWidth+.14}`,
+    height:`${rackHeight+.18}`,
+    depth:`${rackDepth+.18}`,
     color:'#ffffff',
     opacity:'.001',
     transparent:'true'
@@ -610,7 +597,9 @@ function buildRack(def){
         width:'.018',
         height:rackHeight,
         depth:'.018',
-        color:'#5f7284'
+        color:'#5f7284',
+        opacity:'.72',
+        transparent:'true'
       });
       group.appendChild(post);
       parts.push(post);
@@ -625,7 +614,9 @@ function buildRack(def){
         width:rackWidth,
         height:'.018',
         depth:'.025',
-        color:'#5f7284'
+        color:'#5f7284',
+        opacity:'.72',
+        transparent:'true'
       });
       group.appendChild(beam);
       parts.push(beam);
@@ -643,10 +634,10 @@ function buildRack(def){
       const loc = E('a-box',{
         position:`${x} ${y} -.005`,
         width:`${bayWidth-.02}`,
-        height:'.085',
+        height:'.078',
         depth:`${rackDepth-.05}`,
         color:occupied ? '#1e3c6e' : '#0e1e38',
-        opacity:occupied ? '.92' : '.52',
+        opacity:occupied ? '.74' : '.28',
         transparent:'true'
       });
 
@@ -664,11 +655,12 @@ function buildRack(def){
   }
 
   const labelBox = E('a-plane',{
-    position:`0 .90 -.15`,
+    position:`0 .84 -.15`,
     width:'.40',
     height:'.11',
     color:'#08111e',
-    opacity:'.96'
+    opacity:'.86',
+    transparent:'true'
   });
   const labelText = E('a-text',{
     value:def.id,
@@ -687,13 +679,13 @@ function buildRoute(){
   routeEl.innerHTML = '';
 
   const points = [
-    [-2.02,1.14],
+    [-2.02,1.10],
     [-1.65,.25],
     [-.55,.25],
     [-.55,-1.02],
     [.55,-1.02],
     [1.65,-1.02],
-    [2.02,-1.33]
+    [2.02,-1.30]
   ];
 
   for(let i=0;i<points.length-1;i++){
@@ -705,13 +697,13 @@ function buildRoute(){
     const rot = Math.atan2(dx,dz)*180/Math.PI;
 
     routeEl.appendChild(E('a-box',{
-      position:`${(x1+x2)/2} .035 ${(z1+z2)/2}`,
+      position:`${(x1+x2)/2} .038 ${(z1+z2)/2}`,
       width:'.055',
       height:'.025',
       depth:len,
       rotation:`0 ${rot} 0`,
       color:'#f39c12',
-      opacity:'.76',
+      opacity:'.66',
       transparent:'true'
     }));
   }
@@ -726,18 +718,8 @@ function selectRack(id){
 function selectLocal(id){
   const local = localMap[id];
   if(!local) return;
-
   state.selectedRack = local.rackId;
   state.selectedLocal = id;
-
-  highlightEl.innerHTML = '';
-  const rack = rackMap[local.rackId];
-  const localObj = local.el.object3D;
-  if(localObj){
-    const p = new THREE.Vector3();
-    localObj.getWorldPosition(p);
-  }
-
   updateMode();
 }
 
@@ -799,12 +781,11 @@ function toggleLabels(){
 
 function toggleDetail(){
   state.detail = !state.detail;
-  gridEl.setAttribute('visible', state.detail?'true':'false');
   updateMode();
 }
 
 function scaleModel(mult){
-  state.scale = Math.max(.28, Math.min(1.45, state.scale*mult));
+  state.scale = Math.max(.24, Math.min(1.20, state.scale*mult));
   applyTransform();
 }
 
@@ -820,7 +801,7 @@ function moveModel(dx,dz){
 }
 
 function resetView(){
-  state.scale = .58;
+  state.scale = .46;
   state.rotY = 0;
   state.x = 0;
   state.z = 0;
@@ -904,6 +885,9 @@ function midpoint(t1,t2){
   };
 }
 
+let sceneEl;
+let cameraObj;
+
 function bindGestures(){
   sceneEl.addEventListener('loaded',()=>{
     cameraObj = sceneEl.camera;
@@ -962,7 +946,7 @@ function bindGestures(){
         const mid = midpoint(t1,t2);
         const ratio = distance(t1,t2)/Math.max(1,state.gesture.dist);
 
-        state.scale = Math.max(.28,Math.min(1.45,state.gesture.scale*ratio));
+        state.scale = Math.max(.24,Math.min(1.20,state.gesture.scale*ratio));
         state.x = state.gesture.x + (mid.x-state.gesture.mx)*.0015;
         state.z = state.gesture.z + (mid.y-state.gesture.my)*.0015;
         applyTransform();
