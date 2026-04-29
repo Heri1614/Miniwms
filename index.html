@@ -1,1259 +1,1365 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.2 Espejo Pro FIX</title>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>MiniWMS AR · V9 Selección Precisa</title>
 
-<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #02040a;
+      color: #e7f5ff;
+    }
 
-body{
-  overflow:hidden;
-  background:#02040a;
-  font-family:'Segoe UI',Arial,sans-serif;
-  color:#e0eaff;
-}
+    body {
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
 
-#topbar{
-  position:fixed;
-  top:0;left:0;right:0;
-  z-index:90;
-  min-height:56px;
-  padding:10px 12px;
-  background:linear-gradient(180deg,rgba(5,10,22,.97),rgba(5,10,22,.72));
-  border-bottom:1px solid rgba(79,195,247,.30);
-  backdrop-filter:blur(10px);
-}
+    #app {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: #02040a;
+    }
 
-#topbar h1{
-  font-size:15px;
-  color:#4fc3f7;
-  font-weight:800;
-  letter-spacing:.4px;
-  line-height:1.1;
-}
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, rgba(6, 12, 26, 0.96), rgba(8, 18, 40, 0.90));
+      border-bottom: 1px solid rgba(79,195,247,0.25);
+      backdrop-filter: blur(10px);
+    }
 
-#topbar p{
-  margin-top:2px;
-  font-size:10.5px;
-  color:#7fb3e0;
-}
+    .brand {
+      min-width: 0;
+      flex: 1;
+    }
 
-#status{
-  position:fixed;
-  top:68px;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:95;
-  min-width:245px;
-  text-align:center;
-  padding:8px 16px;
-  border-radius:24px;
-  background:rgba(80,15,15,.94);
-  border:1px solid #e74c3c;
-  color:#ffb3b3;
-  font-size:12.5px;
-  box-shadow:0 8px 24px rgba(0,0,0,.42);
-  backdrop-filter:blur(8px);
-}
+    .brand h1 {
+      font-size: 17px;
+      line-height: 1.1;
+      color: #4fc3f7;
+      letter-spacing: 0.2px;
+      font-weight: 700;
+    }
 
-#status.ok{
-  background:rgba(7,88,48,.94);
-  border-color:#2ecc71;
-  color:#55efc4;
-}
+    .brand p {
+      margin-top: 3px;
+      font-size: 11px;
+      color: #9dcdf1;
+      opacity: 0.95;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-#controls{
-  position:fixed;
-  left:12px;
-  right:12px;
-  bottom:12px;
-  z-index:100;
-  padding:12px;
-  border-radius:18px;
-  background:rgba(5,10,22,.92);
-  border:1px solid #1b3660;
-  box-shadow:0 14px 36px rgba(0,0,0,.50);
-  backdrop-filter:blur(10px);
-  max-height:74vh;
-  overflow-y:auto;
-}
+    .pill {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      border-radius: 22px;
+      font-size: 12px;
+      line-height: 1.15;
+      text-align: center;
+      min-width: 145px;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+    }
 
-#controls::-webkit-scrollbar{
-  width:4px;
-}
+    .pill.searching {
+      background: rgba(122, 21, 21, 0.88);
+      color: #ffd2d2;
+      border-color: rgba(255, 100, 100, 0.35);
+    }
 
-#controls::-webkit-scrollbar-thumb{
-  background:#1b3660;
-  border-radius:4px;
-}
+    .pill.ok {
+      background: rgba(18, 129, 68, 0.92);
+      color: #deffec;
+      border-color: rgba(112,255,171,0.35);
+    }
 
-#controls.hidden{display:none}
+    .status-bubble {
+      position: fixed;
+      top: 84px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      width: min(82vw, 430px);
+      padding: 12px 18px;
+      border-radius: 24px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.25;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(18,129,68,0.92);
+      color: #deffec;
+    }
 
-#showControls{
-  position:fixed;
-  left:50%;
-  bottom:12px;
-  transform:translateX(-50%);
-  z-index:110;
-  display:none;
-  padding:10px 18px;
-  border-radius:30px;
-  border:1px solid #4fc3f7;
-  background:rgba(5,10,22,.94);
-  color:#4fc3f7;
-  font-size:13px;
-  font-weight:800;
-  box-shadow:0 8px 22px rgba(0,0,0,.45);
-}
+    .controls {
+      position: fixed;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      z-index: 60;
+      background: linear-gradient(180deg, rgba(8,16,34,0.96), rgba(10,22,48,0.95));
+      border: 1px solid rgba(79,195,247,0.25);
+      border-radius: 28px;
+      padding: 16px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.35);
+      backdrop-filter: blur(12px);
+      max-height: 70vh;
+      overflow-y: auto;
+    }
 
-#showControls.show{display:block}
+    .controls.hidden {
+      display: none;
+    }
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-  margin-bottom:10px;
-}
+    .row2, .row4 {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
 
-.mini-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  margin-bottom:10px;
-}
+    .row2 { grid-template-columns: 1fr 1fr; }
+    .row4 { grid-template-columns: repeat(4, 1fr); }
 
-button{
-  width:100%;
-  padding:12px 8px;
-  border-radius:12px;
-  border:1px solid #1b3660;
-  background:rgba(18,38,75,.72);
-  color:#a8d4ff;
-  font-size:12.5px;
-  font-weight:700;
-}
+    .btn {
+      min-height: 58px;
+      border-radius: 18px;
+      border: 1px solid rgba(79,195,247,0.42);
+      background: rgba(15,35,76,0.88);
+      color: #9fe0ff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      transition: transform .12s ease, background .16s ease, border-color .16s ease, color .16s ease;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
 
-button:active{transform:scale(.98)}
-button.primary{border-color:#4fc3f7;color:#4fc3f7}
-button.green{border-color:#2ecc71;color:#55efc4}
-button.orange{border-color:#f39c12;color:#f5b041}
-button.purple{border-color:#9b59b6;color:#d7b4ea}
-button.red{border-color:#e74c3c;color:#ff9999}
+    .btn:active {
+      transform: scale(0.985);
+    }
 
-.searchRow{
-  display:flex;
-  gap:8px;
-  margin-top:6px;
-  align-items:center;
-}
+    .btn.green { border-color: rgba(75,255,155,0.55); color: #66ffd8; }
+    .btn.orange { border-color: rgba(255,181,64,0.65); color: #f8b74b; }
+    .btn.purple { border-color: rgba(210,111,255,0.55); color: #d9a5ff; }
+    .btn.red { border-color: rgba(255,99,99,0.65); color: #ff9a9a; }
+    .btn.blue2 { border-color: rgba(96,220,255,0.60); color: #66d7ff; }
+    .btn.gray { border-color: rgba(190,210,255,0.18); color: #cfe2ff; }
 
-.searchRow input{
-  flex:1 1 auto;
-  width:100%;
-  min-width:0;
-  padding:12px 10px;
-  border-radius:12px;
-  border:1px solid #1b3660;
-  background:rgba(18,38,75,.62);
-  color:#e0eaff;
-  font-size:13px;
-  outline:none;
-  direction:ltr;
-  unicode-bidi:plaintext;
-  text-align:left;
-  text-transform:uppercase;
-}
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr 116px;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
 
-.searchRow input:focus{
-  border-color:#4fc3f7;
-}
+    .search-input {
+      width: 100%;
+      min-height: 58px;
+      border-radius: 18px;
+      border: 1px solid rgba(79,195,247,0.35);
+      background: rgba(15,35,76,0.88);
+      color: #eef9ff;
+      padding: 0 16px;
+      font-size: 16px;
+      outline: none;
+      direction: ltr;
+      text-align: left;
+    }
 
-.searchRow button{
-  flex:0 0 92px;
-  width:92px;
-  min-width:92px;
-}
+    .search-input::placeholder {
+      color: rgba(214,230,255,0.55);
+    }
 
-#info{
-  margin-top:10px;
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(79,195,247,.22);
-  background:rgba(12,25,55,.66);
-  color:#c7dcf5;
-  font-size:12.2px;
-  line-height:1.55;
-}
+    .info-box {
+      border: 1px solid rgba(79,195,247,0.22);
+      border-radius: 20px;
+      background: rgba(10,22,48,0.85);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      color: #dcefff;
+      line-height: 1.5;
+      font-size: 13px;
+    }
 
-#info b{color:#4fc3f7}
+    .info-box b { color: #59cfff; }
 
-#hint{
-  margin-top:7px;
-  color:#7fb3e0;
-  font-size:10px;
-  line-height:1.55;
-}
+    .hint {
+      margin-top: 8px;
+      color: #a8d3f1;
+      font-size: 12px;
+      line-height: 1.45;
+    }
 
-@media(max-width:420px){
-  .mini-grid button{
-    padding:10px 4px;
-    font-size:12px;
-  }
-}
-</style>
+    .hide-btn {
+      margin-top: 6px;
+      width: 100%;
+    }
+
+    .show-controls {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      z-index: 65;
+      display: none;
+      min-height: 54px;
+      padding: 0 24px;
+      border-radius: 999px;
+      background: rgba(10,22,48,0.95);
+      border: 1px solid rgba(79,195,247,0.45);
+      color: #7fd6ff;
+      font-size: 16px;
+      font-weight: 700;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+    }
+
+    .show-controls.visible {
+      display: block;
+    }
+
+    .mode-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+      vertical-align: middle;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .mode-normal { background: rgba(61,123,255,0.18); color: #8fd7ff; }
+    .mode-occ { background: rgba(255,181,64,0.18); color: #ffc96d; }
+    .mode-route { background: rgba(216,111,255,0.18); color: #e2a1ff; }
+
+    .touch-tip {
+      position: fixed;
+      right: 12px;
+      top: 130px;
+      z-index: 45;
+      padding: 8px 11px;
+      border-radius: 14px;
+      background: rgba(8,18,40,0.88);
+      border: 1px solid rgba(79,195,247,0.22);
+      font-size: 11px;
+      line-height: 1.35;
+      color: #9fc9ea;
+      max-width: 180px;
+    }
+
+    @media (max-width: 520px) {
+      .row4 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .btn {
+        min-height: 52px;
+        font-size: 15px;
+      }
+      .controls {
+        padding: 13px;
+      }
+      .search-row {
+        grid-template-columns: 1fr 100px;
+      }
+      .brand h1 { font-size: 15px; }
+      .brand p { font-size: 10px; }
+      .pill { min-width: 132px; font-size: 11px; }
+    }
+  </style>
 </head>
-
 <body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <h1>🏭 MiniWMS AR · V9 Selección Precisa</h1>
+      <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y selección precisa</p>
+    </div>
+    <div id="markerPill" class="pill searching">Buscando marcador HIRO...</div>
+  </div>
 
-<div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.2 Espejo Pro FIX</h1>
-  <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y búsqueda</p>
+  <div id="statusBubble" class="status-bubble">
+    Marcador detectado · MiniWMS AR activo
+  </div>
+
+  <div class="touch-tip">
+    <b>Gestos:</b><br>
+    1 dedo = girar / seleccionar<br>
+    2 dedos = acercar o mover<br>
+    Con panel oculto se siente mejor
+  </div>
+
+  <div id="controls" class="controls">
+    <div class="row2">
+      <button class="btn blue2" id="btnZoomIn">+ Acercar</button>
+      <button class="btn blue2" id="btnZoomOut">− Alejar</button>
+    </div>
+
+    <div class="row2">
+      <button class="btn gray" id="btnRotL">↶ Girar</button>
+      <button class="btn gray" id="btnRotR">↷ Girar</button>
+    </div>
+
+    <div class="row2">
+      <button class="btn green" id="btnNormal">Almacén</button>
+      <button class="btn orange" id="btnOcc">Ocupación</button>
+    </div>
+
+    <div class="row2">
+      <button class="btn purple" id="btnRoute">Ruta Pick</button>
+      <button class="btn gray" id="btnReset">Reset</button>
+    </div>
+
+    <div class="row2">
+      <button class="btn blue2" id="btnVisual">Visual</button>
+      <button class="btn orange" id="btnBase">Base AR</button>
+    </div>
+
+    <div class="row2">
+      <button class="btn purple" id="btnDetail">Detalle</button>
+      <button class="btn red" id="btnClear">Limpiar</button>
+    </div>
+
+    <div class="row4">
+      <button class="btn purple" id="btnUp">↑</button>
+      <button class="btn purple" id="btnLeft">←</button>
+      <button class="btn purple" id="btnRight">→</button>
+      <button class="btn purple" id="btnDown">↓</button>
+    </div>
+
+    <div class="search-row">
+      <input
+        id="searchInput"
+        class="search-input"
+        type="text"
+        autocapitalize="characters"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="BUSCAR: RC07, RC07-3-05, 98A1850, 100506046"
+      />
+      <button class="btn blue2" id="btnSearch">Buscar</button>
+    </div>
+
+    <div class="info-box" id="infoBox">
+      <b>Estado:</b> esperando marcador. Al detectarlo, se mostrará el layout AR tipo MiniWMS.
+      <div class="hint" id="hintText">
+        Prueba: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.
+        <br>Cuando el panel se oculte: 1 dedo gira, 2 dedos acercan o desplazan.
+      </div>
+    </div>
+
+    <button class="btn gray hide-btn" id="btnHideControls">Ocultar controles</button>
+  </div>
+
+  <button id="showControlsBtn" class="show-controls">▲ Controles</button>
+
+  <a-scene
+    id="scene"
+    embedded
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    renderer="antialias: true; alpha: true; logarithmicDepthBuffer: true; precision: medium;"
+    arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;"
+  >
+    <a-assets></a-assets>
+
+    <a-entity light="type: ambient; color: #d8ecff; intensity: 1.15"></a-entity>
+    <a-entity light="type: directional; color: #ffffff; intensity: 0.85" position="2 4 2"></a-entity>
+    <a-entity light="type: directional; color: #a7d8ff; intensity: 0.35" position="-2 2 -2"></a-entity>
+
+    <a-marker preset="hiro" id="hiroMarker">
+      <a-entity id="warehouseRoot" position="0 0 0" rotation="0 0 0" scale="0.60 0.60 0.60"></a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
 </div>
-
-<div id="status">Buscando marcador HIRO...</div>
-
-<div id="controls">
-  <div class="grid">
-    <button class="primary" onclick="scaleWarehouse(1.12)">+ Acercar</button>
-    <button class="primary" onclick="scaleWarehouse(0.88)">− Alejar</button>
-
-    <button onclick="rotateWarehouse(-15)">↶ Girar</button>
-    <button onclick="rotateWarehouse(15)">↷ Girar</button>
-
-    <button class="green" onclick="toggleWarehouse()">Almacén</button>
-    <button class="orange" onclick="toggleHeatmap()">Ocupación</button>
-
-    <button class="purple" onclick="toggleRoute()">Ruta Pick</button>
-    <button onclick="resetWarehouse()">Reset</button>
-
-    <button class="primary" onclick="toggleStyleMode()">Visual</button>
-    <button class="orange" onclick="toggleAnchor()">Base AR</button>
-
-    <button class="purple" onclick="toggleDetail()">Detalle</button>
-    <button class="red" onclick="clearHighlight()">Limpiar</button>
-  </div>
-
-  <div class="mini-grid">
-    <button class="purple" onclick="moveWarehouse(0,-0.08)">↑</button>
-    <button class="purple" onclick="moveWarehouse(-0.08,0)">←</button>
-    <button class="purple" onclick="moveWarehouse(0.08,0)">→</button>
-    <button class="purple" onclick="moveWarehouse(0,0.08)">↓</button>
-  </div>
-
-  <div class="searchRow">
-    <input id="searchInput" placeholder="BUSCAR: RC07, RC07-3-05, 98A1850" onkeydown="if(event.key==='Enter')searchTarget()">
-    <button class="primary" onclick="searchTarget()">Buscar</button>
-  </div>
-
-  <div id="info">
-    <b>Estado:</b> esperando marcador. Al detectarlo, se mostrará el layout AR tipo MiniWMS.
-  </div>
-
-  <div id="hint">
-    Prueba: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.  
-    Si se pone lento, toca <b>Detalle</b>. Con controles ocultos: 1 dedo gira, 2 dedos acercan/desplazan.
-  </div>
-
-  <div style="margin-top:10px">
-    <button onclick="hideControls()">Ocultar controles</button>
-  </div>
-</div>
-
-<button id="showControls" onclick="showControls()">▲ Controles</button>
-
-<a-scene
-  embedded
-  vr-mode-ui="enabled:false"
-  renderer="logarithmicDepthBuffer:true; antialias:true; alpha:true;"
-  arjs="sourceType:webcam; debugUIEnabled:false; detectionMode:mono; trackingMethod:best;">
-
-  <a-marker id="hiroMarker" preset="hiro" emitevents="true">
-
-    <a-entity id="anchorGroup" visible="true">
-      <a-box position="0 0.010 0" width="1.34" height="0.016" depth="1.34" color="#7ff3ff" opacity="0.13" transparent="true"></a-box>
-      <a-ring position="0 0.026 0" rotation="-90 0 0" radius-inner="0.48" radius-outer="0.56" color="#4fc3f7" opacity="0.50" transparent="true"></a-ring>
-      <a-box position="0 0.029 0" width="1.02" height="0.010" depth="0.018" color="#ffe000" opacity="0.40" transparent="true"></a-box>
-      <a-box position="0 0.030 0" width="0.018" height="0.010" depth="1.02" color="#ffe000" opacity="0.40" transparent="true"></a-box>
-    </a-entity>
-
-    <a-entity id="warehouse" position="0 0.042 0" rotation="0 0 0" scale="0.060 0.060 0.060" visible="true"></a-entity>
-    <a-entity id="routeGroup" position="0 0.042 0" rotation="0 0 0" scale="0.060 0.060 0.060" visible="false"></a-entity>
-    <a-entity id="localHighlight" position="0 0.042 0" rotation="0 0 0" scale="0.060 0.060 0.060" visible="false"></a-entity>
-
-  </a-marker>
-
-  <a-entity
-    camera
-    cursor="rayOrigin: mouse"
-    raycaster="objects: .pickable">
-  </a-entity>
-</a-scene>
 
 <script>
-const RACKS = [
-  {id:'RC01', x:-8.6, z:-4.8, levels:4, bays:8, occ:22, cap:32, nps:['98A1850','100506046'], dir:'LTR'},
-  {id:'RC02', x:-5.2, z:-4.8, levels:4, bays:8, occ:26, cap:32, nps:['99B5492','E7137200'], dir:'RTL'},
-  {id:'RC03', x:-1.8, z:-4.8, levels:4, bays:8, occ:14, cap:32, nps:['C5520','J4500'], dir:'LTR'},
-  {id:'RC04', x: 1.6, z:-4.8, levels:4, bays:8, occ:28, cap:32, nps:['100506046','K8810'], dir:'RTL'},
-  {id:'RC05', x: 5.0, z:-4.8, levels:4, bays:8, occ:31, cap:32, nps:['98A1850','D3301'], dir:'LTR'},
+(() => {
+  const scene = document.getElementById('scene');
+  const marker = document.getElementById('hiroMarker');
+  const warehouseRoot = document.getElementById('warehouseRoot');
 
-  {id:'RC06', x:-8.6, z: 0.0, levels:5, bays:8, occ:35, cap:40, nps:['T1010','98A1850'], dir:'LTR'},
-  {id:'RC07', x:-5.2, z: 0.0, levels:5, bays:8, occ:37, cap:40, nps:['100506046','98A1850'], dir:'RTL'},
-  {id:'RC08', x:-1.8, z: 0.0, levels:5, bays:8, occ:16, cap:40, nps:['Q5510','N9900'], dir:'LTR'},
-  {id:'RC09', x: 1.6, z: 0.0, levels:5, bays:8, occ:39, cap:40, nps:['E7137200','C5520'], dir:'RTL'},
-  {id:'RC10', x: 5.0, z: 0.0, levels:5, bays:8, occ:32, cap:40, nps:['100506046','99B5492'], dir:'LTR'},
+  const markerPill = document.getElementById('markerPill');
+  const statusBubble = document.getElementById('statusBubble');
+  const infoBox = document.getElementById('infoBox');
+  const hintText = document.getElementById('hintText');
+  const controls = document.getElementById('controls');
+  const showControlsBtn = document.getElementById('showControlsBtn');
+  const searchInput = document.getElementById('searchInput');
 
-  {id:'RC11', x:-8.6, z: 4.8, levels:4, bays:8, occ:12, cap:32, nps:['P1100','U1120'], dir:'LTR'},
-  {id:'RC12', x:-5.2, z: 4.8, levels:4, bays:8, occ:29, cap:32, nps:['98A1850','M3300'], dir:'RTL'},
-  {id:'RC13', x:-1.8, z: 4.8, levels:4, bays:8, occ:18, cap:32, nps:['R4400','S5521'], dir:'LTR'},
-  {id:'RC14', x: 1.6, z: 4.8, levels:4, bays:8, occ:30, cap:32, nps:['100506046','98A1850'], dir:'RTL'},
-  {id:'RC15', x: 5.0, z: 4.8, levels:4, bays:8, occ:20, cap:32, nps:['V2001','W8871'], dir:'LTR'}
-];
+  const state = {
+    markerVisible: false,
+    controlsHidden: false,
+    mode: 'normal',
+    showBase: true,
+    detail: true,
+    visual: true,
+    selectedRack: null,
+    selectedLocal: null,
+    scale: 0.60,
+    rotY: 0,
+    posX: 0,
+    posZ: 0,
+    gesture: {
+      active: false,
+      moved: false,
+      startX: 0,
+      startY: 0,
+      startRotY: 0,
+      twoFinger: false,
+      startDist: 0,
+      startScale: 0.60,
+      startMidX: 0,
+      startMidY: 0,
+      startPosX: 0,
+      startPosZ: 0
+    }
+  };
 
-let rackMap = new Map();
-let routeVisible = false;
-let heatmap = false;
-let styleMode = 'realista';
-let highDetail = true;
-let warehouseVisible = true;
-let anchorVisible = true;
-let currentScale = 0.060;
-let currentRotation = 0;
-let offsetX = 0;
-let offsetZ = 0;
+  const rackMap = {};
+  const localMap = {};
+  const rackVisuals = {};
+  const routeLines = [];
+  let basePlane, glowPlane, pinCylinder, pinTopSphere, aisleGroup, zoneGroup, labelGroup;
+  let rendererRef = null;
+  let cameraRef = null;
+  let raycaster = null;
+  let selectableRoots = [];
 
-function E(tag, attrs = {}){
-  const el = document.createElement(tag);
-  Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
-  return el;
-}
+  const inventoryMap = {
+    "98A1850": "RC07-3-05",
+    "100506046": "RC10-2-04",
+    "1110CR": "RC14-4-03",
+    "70CR": "RC16-2-06",
+    "99B5492": "RC05-1-02",
+    "E7137200": "RC08-5-04"
+  };
 
-function updateInfo(html){
-  document.getElementById('info').innerHTML = html;
-}
+  const rackDefs = [
+    { id: 'RC05', x: -1.58, z: -1.08, bays: 6, levels: 5, zone: 'A', side: 'top' },
+    { id: 'RC07', x: -0.52, z: -1.08, bays: 6, levels: 5, zone: 'A', side: 'top' },
+    { id: 'RC08', x:  0.54, z: -1.08, bays: 6, levels: 5, zone: 'A', side: 'top' },
+    { id: 'RC10', x:  1.60, z: -1.08, bays: 6, levels: 5, zone: 'A', side: 'top' },
 
-function isHolo(){
-  return styleMode === 'holograma';
-}
-
-function frameColor(ratio){
-  if(heatmap){
-    if(ratio >= 0.90) return '#e74c3c';
-    if(ratio >= 0.70) return '#f39c12';
-    return '#2ecc71';
-  }
-  return isHolo() ? '#65d8ff' : '#6f8cad';
-}
-
-function palletColor(ratio){
-  if(heatmap){
-    if(ratio >= 0.90) return '#ff6b6b';
-    if(ratio >= 0.70) return '#f5b041';
-    return '#55efc4';
-  }
-  return isHolo() ? '#00d9ff' : '#55aaff';
-}
-
-function floorColor(){
-  return isHolo() ? '#061c39' : '#101826';
-}
-
-function floorOpacity(){
-  return isHolo() ? '0.52' : '0.96';
-}
-
-function buildWarehouse(){
-  const w = document.getElementById('warehouse');
-  w.innerHTML = '';
-  rackMap.clear();
-
-  buildFloor(w);
-  buildGrid(w);
-  buildPerimeter(w);
-  buildAisles(w);
-  buildZones(w);
-  buildDocks(w);
-  buildTrailers(w);
-  buildColumns(w);
-  buildSafetyItems(w);
-
-  RACKS.forEach(r => buildRack(w, r));
-
-  w.appendChild(E('a-text', {
-    value:'MiniWMS Layout · CEVA AR',
-    position:'-10.0 0.16 -6.65',
-    rotation:'-90 0 0',
-    color:'#4fc3f7',
-    width:'5.8'
-  }));
-
-  buildRoute(routeVisible);
-}
-
-function buildFloor(parent){
-  parent.appendChild(E('a-box', {
-    position:'-1.8 0 0',
-    width:'19.2',
-    height:'0.08',
-    depth:'14.2',
-    color:floorColor(),
-    opacity:floorOpacity(),
-    transparent:isHolo() ? 'true' : 'false'
-  }));
-
-  parent.appendChild(E('a-box', {
-    position:'-1.8 0.045 0',
-    width:'19.35',
-    height:'0.012',
-    depth:'14.35',
-    color:'#4fc3f7',
-    opacity:isHolo() ? '0.18' : '0.07',
-    transparent:'true'
-  }));
-}
-
-function buildGrid(parent){
-  if(!highDetail) return;
-
-  for(let x=-11; x<=8; x+=1){
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.046 0`,
-      width:'0.012',
-      height:'0.010',
-      depth:'13.5',
-      color:'#20486f',
-      opacity:isHolo() ? '0.45' : '0.10',
-      transparent:'true'
-    }));
-  }
-
-  for(let z=-7; z<=7; z+=1){
-    parent.appendChild(E('a-box', {
-      position:`-1.8 0.047 ${z}`,
-      width:'18.8',
-      height:'0.010',
-      depth:'0.012',
-      color:'#20486f',
-      opacity:isHolo() ? '0.45' : '0.10',
-      transparent:'true'
-    }));
-  }
-}
-
-function buildPerimeter(parent){
-  const color = isHolo() ? '#4fc3f7' : '#2b4366';
-  const opacity = isHolo() ? '0.26' : '0.16';
-
-  [
-    {x:-1.8,z:-7.05,w:19.1,d:0.07},
-    {x:-1.8,z: 7.05,w:19.1,d:0.07},
-    {x:-11.35,z:0,w:0.07,d:14.1},
-    {x: 7.75,z:0,w:0.07,d:14.1}
-  ].forEach(b => {
-    parent.appendChild(E('a-box', {
-      position:`${b.x} 0.075 ${b.z}`,
-      width:b.w,
-      height:'0.055',
-      depth:b.d,
-      color,
-      opacity,
-      transparent:'true'
-    }));
-  });
-}
-
-function buildAisles(parent){
-  [-2.35, 2.35].forEach(z => {
-    parent.appendChild(E('a-box', {
-      position:`-1.8 0.073 ${z}`,
-      width:'18.5',
-      height:'0.035',
-      depth:'0.44',
-      color:'#ffe000',
-      opacity:isHolo() ? '0.32' : '0.19',
-      transparent:'true'
-    }));
-  });
-
-  [-10.25, 7.05].forEach(x => {
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.074 0`,
-      width:'0.36',
-      height:'0.035',
-      depth:'13.25',
-      color:'#4fc3f7',
-      opacity:isHolo() ? '0.25' : '0.13',
-      transparent:'true'
-    }));
-  });
-
-  if(highDetail){
-    [
-      [-9.2,-2.35],[-6.5,-2.35],[-3.8,-2.35],[-1.1,-2.35],[1.6,-2.35],[4.3,-2.35],
-      [-9.2, 2.35],[-6.5, 2.35],[-3.8, 2.35],[-1.1, 2.35],[1.6, 2.35],[4.3, 2.35]
-    ].forEach(([x,z]) => addArrow(parent,x,z));
-  }
-}
-
-function addArrow(parent,x,z){
-  parent.appendChild(E('a-box', {
-    position:`${x} 0.11 ${z}`,
-    width:'0.34',
-    height:'0.035',
-    depth:'0.07',
-    color:'#f5b041',
-    opacity:'0.42',
-    transparent:'true'
-  }));
-
-  parent.appendChild(E('a-cone', {
-    position:`${x+0.24} 0.11 ${z}`,
-    'radius-bottom':'0.08',
-    'radius-top':'0',
-    height:'0.16',
-    rotation:'0 0 -90',
-    color:'#f5b041',
-    opacity:'0.42',
-    transparent:'true'
-  }));
-}
-
-function addZone(parent,label,x,z,w,d,color){
-  parent.appendChild(E('a-box', {
-    position:`${x} 0.082 ${z}`,
-    width:w,
-    height:'0.06',
-    depth:d,
-    color,
-    opacity:isHolo() ? '0.28' : '0.60',
-    transparent:'true'
-  }));
-
-  parent.appendChild(E('a-text', {
-    value:label,
-    position:`${x - w/2 + 0.16} 0.17 ${z}`,
-    rotation:'-90 0 0',
-    color:'#ffffff',
-    width:'3.6'
-  }));
-}
-
-function buildZones(parent){
-  addZone(parent,'RECIBO',-8.8,-6.32,3.2,0.9,'#16a085');
-  addZone(parent,'SURTIDO', 4.6,-6.32,4.3,0.9,'#e67e22');
-  addZone(parent,'AUDITORIA',-8.8,6.32,3.7,0.9,'#9b59b6');
-  addZone(parent,'EMBARQUE',4.6,6.32,4.3,0.9,'#3498db');
-
-  if(highDetail){
-    addZone(parent,'QA HOLD',-1.8,6.32,2.5,0.72,'#e74c3c');
-    addZone(parent,'STAGING',-1.8,-6.32,2.5,0.72,'#f39c12');
-  }
-}
-
-function buildDocks(parent){
-  for(let i=0;i<4;i++){
-    const x = 2.6 + i*1.05;
-
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.18 -6.88`,
-      width:'0.78',
-      height:'0.28',
-      depth:'0.24',
-      color:'#596b80'
-    }));
-
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.42 -7.02`,
-      width:'0.72',
-      height:'0.34',
-      depth:'0.12',
-      color:'#7fe8ff',
-      opacity:'0.50',
-      transparent:'true'
-    }));
-
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.072 -6.58`,
-      width:'0.82',
-      height:'0.05',
-      depth:'0.12',
-      color:'#c98d35'
-    }));
-  }
-}
-
-function buildTrailers(parent){
-  if(!highDetail) return;
-
-  for(let i=0;i<2;i++){
-    const x = 3.15 + i*2.15;
-
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.24 -7.65`,
-      width:'1.55',
-      height:'0.38',
-      depth:'0.62',
-      color:'#d7dde6',
-      opacity:'0.90',
-      transparent:'true'
-    }));
-
-    parent.appendChild(E('a-box', {
-      position:`${x-0.63} 0.47 -7.98`,
-      width:'0.25',
-      height:'0.16',
-      depth:'0.08',
-      color:'#2c3e50'
-    }));
-  }
-}
-
-function buildColumns(parent){
-  const cols = [
-    [-9.4,-5.05],[-5.9,-5.05],[-2.4,-5.05],[1.1,-5.05],[4.6,-5.05],
-    [-9.4, 0.00],[-5.9, 0.00],[-2.4, 0.00],[1.1, 0.00],[4.6, 0.00],
-    [-9.4, 5.05],[-5.9, 5.05],[-2.4, 5.05],[1.1, 5.05],[4.6, 5.05]
+    { id: 'RC14', x: -1.58, z:  0.62, bays: 6, levels: 5, zone: 'B', side: 'bottom' },
+    { id: 'RC15', x: -0.52, z:  0.62, bays: 6, levels: 5, zone: 'B', side: 'bottom' },
+    { id: 'RC16', x:  0.54, z:  0.62, bays: 6, levels: 5, zone: 'B', side: 'bottom' },
+    { id: 'RC18', x:  1.60, z:  0.62, bays: 6, levels: 5, zone: 'B', side: 'bottom' }
   ];
 
-  cols.forEach(([x,z]) => {
-    parent.appendChild(E('a-cylinder', {
-      position:`${x} 0.55 ${z}`,
-      radius:'0.08',
-      height:'1.08',
-      color:'#647180',
-      opacity:isHolo() ? '0.70' : '0.96',
-      transparent:isHolo() ? 'true' : 'false'
-    }));
-  });
-}
-
-function buildSafetyItems(parent){
-  if(!highDetail) return;
-
-  parent.appendChild(E('a-box', {
-    position:'-10.75 0.20 5.8',
-    width:'0.28',
-    height:'0.40',
-    depth:'0.15',
-    color:'#e74c3c'
-  }));
-
-  parent.appendChild(E('a-text', {
-    value:'EXIT',
-    position:'-10.92 0.47 5.92',
-    rotation:'-90 0 90',
-    color:'#ffffff',
-    width:'1.0'
-  }));
-
-  parent.appendChild(E('a-box', {
-    position:'6.95 0.20 -5.9',
-    width:'0.30',
-    height:'0.40',
-    depth:'0.15',
-    color:'#2ecc71'
-  }));
-
-  parent.appendChild(E('a-text', {
-    value:'+',
-    position:'6.89 0.47 -5.80',
-    rotation:'-90 0 90',
-    color:'#ffffff',
-    width:'1.2'
-  }));
-
-  parent.appendChild(E('a-box', {
-    position:'-9.8 0.18 -6.05',
-    width:'0.45',
-    height:'0.25',
-    depth:'0.28',
-    color:'#f39c12'
-  }));
-
-  parent.appendChild(E('a-box', {
-    position:'-9.45 0.30 -6.05',
-    width:'0.06',
-    height:'0.55',
-    depth:'0.04',
-    color:'#2c3e50'
-  }));
-}
-
-function buildRack(parent,rack){
-  const group = E('a-entity', {
-    id:rack.id,
-    class:'pickable',
-    position:`${rack.x} 0 ${rack.z}`
-  });
-
-  const ratio = rack.occ / rack.cap;
-  const width = rack.bays * 0.265;
-  const depth = 0.82;
-  const levelGap = 0.285;
-  const height = rack.levels * levelGap + 0.08;
-  const fColor = frameColor(ratio);
-  const pColor = palletColor(ratio);
-
-  const hitBox = E('a-box', {
-    class:'pickable',
-    position:`0 ${height/2} 0`,
-    width:String(width + 0.35),
-    height:String(height + 0.35),
-    depth:String(depth + 0.35),
-    color:'#ffffff',
-    opacity:'0.001',
-    transparent:'true'
-  });
-
-  hitBox.addEventListener('click', () => highlightRack(rack.id));
-  group.appendChild(hitBox);
-
-  group.appendChild(E('a-box', {
-    position:'0 0.03 0',
-    width:String(width + 0.16),
-    height:'0.02',
-    depth:String(depth + 0.12),
-    color:'#000000',
-    opacity:isHolo() ? '0.16' : '0.28',
-    transparent:'true'
-  }));
-
-  for(let i=0;i<=rack.bays;i++){
-    const x = -width/2 + i*(width/rack.bays);
-    [-depth/2, depth/2].forEach(z => {
-      group.appendChild(E('a-box', {
-        position:`${x} ${height/2} ${z}`,
-        width:'0.035',
-        height:String(height),
-        depth:'0.035',
-        color:fColor,
-        opacity:isHolo() ? '0.76' : '1',
-        transparent:isHolo() ? 'true' : 'false'
-      }));
-    });
+  function setInfo(html) {
+    infoBox.innerHTML = html;
   }
 
-  for(let lv=0;lv<=rack.levels;lv++){
-    const y = lv*levelGap + 0.04;
-    [-depth/2, depth/2].forEach(z => {
-      group.appendChild(E('a-box', {
-        position:`0 ${y} ${z}`,
-        width:String(width + 0.08),
-        height:'0.030',
-        depth:'0.045',
-        color:isHolo() ? '#8fdcff' : '#6e86a8',
-        opacity:isHolo() ? '0.70' : '1',
-        transparent:isHolo() ? 'true' : 'false'
-      }));
-    });
-  }
-
-  if(highDetail){
-    group.appendChild(E('a-box', {
-      position:`0 ${height/2} 0`,
-      width:String(width + 0.04),
-      height:String(height - 0.02),
-      depth:'0.018',
-      color:isHolo() ? '#66c8ff' : '#566b86',
-      opacity:isHolo() ? '0.50' : '0.55',
-      transparent:'true'
-    }));
-  }
-
-  let occupiedLeft = rack.occ;
-  const cells = [];
-
-  for(let lv=1; lv<=rack.levels; lv++){
-    for(let bay=1; bay<=rack.bays; bay++){
-      const localX = -width/2 + (bay - 0.5)*(width/rack.bays);
-      const cellY = (lv - 0.5)*levelGap + 0.06;
-      const frontZ = -depth/2 - 0.02;
-
-      if(highDetail){
-        group.appendChild(E('a-box', {
-          position:`${localX} ${cellY} ${frontZ}`,
-          width:String((width/rack.bays)-0.035),
-          height:'0.17',
-          depth:'0.018',
-          color:isHolo() ? '#6dd9ff' : '#2c3f59',
-          opacity:isHolo() ? '0.30' : '0.78',
-          transparent:'true'
-        }));
+  function setMarkerState(found) {
+    state.markerVisible = found;
+    if (found) {
+      markerPill.className = 'pill ok';
+      markerPill.textContent = 'Marcador detectado';
+      statusBubble.style.background = 'rgba(18,129,68,0.92)';
+      statusBubble.textContent = 'Marcador detectado · MiniWMS AR activo';
+      if (!state.selectedRack && !state.selectedLocal) {
+        setInfo(`
+          <b>Marcador detectado.</b><br>
+          Ya puedes tocar un rack o un local.<br>
+          <span class="mode-tag ${modeClass()}">${modeLabel()}</span>
+          <div class="hint">
+            Si quieres fluidez total, oculta controles y usa gestos.<br>
+            Búsqueda demo: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.
+          </div>
+        `);
       }
-
-      const occ = occupiedLeft > 0;
-      if(occ) occupiedLeft--;
-
-      if(occ){
-        group.appendChild(E('a-box', {
-          class:'pallet',
-          position:`${localX} ${cellY - 0.012} ${-0.20}`,
-          width:String((width/rack.bays)-0.06),
-          height:'0.11',
-          depth:'0.20',
-          color:pColor,
-          opacity:isHolo() ? '0.54' : '0.95',
-          transparent:isHolo() ? 'true' : 'false'
-        }));
-
-        if(highDetail){
-          group.appendChild(E('a-box', {
-            position:`${localX} ${cellY - 0.084} ${-0.20}`,
-            width:String((width/rack.bays)-0.04),
-            height:'0.018',
-            depth:'0.21',
-            color:'#b88436'
-          }));
-        }
-      }
-
-      cells.push({level:lv,bay:bay,x:localX,y:cellY,z:-0.20});
+    } else {
+      markerPill.className = 'pill searching';
+      markerPill.textContent = 'Buscando marcador HIRO...';
+      statusBubble.style.background = 'rgba(122,21,21,0.92)';
+      statusBubble.textContent = 'Buscando marcador HIRO...';
+      setInfo(`
+        <b>Estado:</b> esperando marcador. Al detectarlo, se mostrará el layout AR tipo MiniWMS.
+        <div class="hint">
+          Asegúrate de usar el marcador <b>HIRO</b> bien iluminado y completamente visible.
+        </div>
+      `);
     }
   }
 
-  group.appendChild(E('a-text', {
-    value:rack.id,
-    position:`${-width/2} ${height+0.12} ${-depth/2-0.18}`,
-    rotation:'-70 0 0',
-    color:'#ffffff',
-    width:'2.0'
-  }));
-
-  if(highDetail){
-    group.appendChild(E('a-text', {
-      value:rack.dir,
-      position:`${width/2-0.42} ${height+0.12} ${-depth/2-0.18}`,
-      rotation:'-70 0 0',
-      color:'#7fb3e0',
-      width:'1.25'
-    }));
+  function modeLabel() {
+    if (state.mode === 'occupancy') return 'Modo Ocupación';
+    if (state.mode === 'route') return 'Modo Ruta Pick';
+    return 'Modo Almacén';
   }
 
-  group.addEventListener('click', () => highlightRack(rack.id));
-  parent.appendChild(group);
-  rackMap.set(rack.id,{meta:rack,group,cells});
-}
-
-function buildRoute(show){
-  const g = document.getElementById('routeGroup');
-  g.innerHTML = '';
-  routeVisible = show;
-  g.setAttribute('visible', show ? 'true' : 'false');
-
-  if(!show) return;
-
-  const points = [
-    {x:-8.8,z:-6.2},
-    {x:-8.8,z:-2.35},
-    {x:-5.2,z:-2.35},
-    {x:-5.2,z:0},
-    {x:-5.2,z:4.8},
-    {x:1.6,z:4.8},
-    {x:1.6,z:2.35},
-    {x:5.0,z:2.35},
-    {x:5.0,z:-6.2}
-  ];
-
-  for(let i=0;i<points.length-1;i++){
-    const a = points[i];
-    const b = points[i+1];
-    const midX = (a.x+b.x)/2;
-    const midZ = (a.z+b.z)/2;
-    const dx = b.x-a.x;
-    const dz = b.z-a.z;
-    const len = Math.sqrt(dx*dx + dz*dz);
-    const rotY = Math.atan2(dx,dz)*180/Math.PI;
-
-    g.appendChild(E('a-box', {
-      position:`${midX} 0.13 ${midZ}`,
-      width:'0.18',
-      height:'0.05',
-      depth:String(len),
-      rotation:`0 ${rotY} 0`,
-      color:'#ffe000',
-      opacity:'0.72',
-      transparent:'true'
-    }));
+  function modeClass() {
+    if (state.mode === 'occupancy') return 'mode-occ';
+    if (state.mode === 'route') return 'mode-route';
+    return 'mode-normal';
   }
 
-  points.forEach((p,i) => {
-    g.appendChild(E('a-cylinder', {
-      position:`${p.x} 0.15 ${p.z}`,
-      radius:'0.11',
-      height:'0.045',
-      color:i===0 ? '#2ecc71' : (i===points.length-1 ? '#e74c3c' : '#ff8c00'),
-      opacity:'0.88',
-      transparent:'true'
-    }));
-  });
-}
+  function createEl(tag, attrs = {}) {
+    const el = document.createElement(tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+  }
 
-function applyTransforms(){
-  ['warehouse','routeGroup','localHighlight'].forEach(id => {
-    const el = document.getElementById(id);
-    el.setAttribute('position',`${offsetX} 0.042 ${offsetZ}`);
-    el.setAttribute('rotation',`0 ${currentRotation} 0`);
-    el.setAttribute('scale',`${currentScale} ${currentScale} ${currentScale}`);
-  });
-}
+  function applyTransform() {
+    warehouseRoot.setAttribute('position', `${state.posX} 0 ${state.posZ}`);
+    warehouseRoot.setAttribute('rotation', `0 ${state.rotY} 0`);
+    warehouseRoot.setAttribute('scale', `${state.scale} ${state.scale} ${state.scale}`);
+  }
 
-function clearHighlight(showMsg=true){
-  const lh = document.getElementById('localHighlight');
-  lh.innerHTML = '';
-  lh.setAttribute('visible','false');
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
 
-  rackMap.forEach(entry => {
-    entry.group.querySelectorAll('a-box').forEach(box => {
-      box.removeAttribute('emissive');
-      box.removeAttribute('emissiveIntensity');
+  function dist(t1, t2) {
+    const dx = t1.clientX - t2.clientX;
+    const dy = t1.clientY - t2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function midpoint(t1, t2) {
+    return {
+      x: (t1.clientX + t2.clientX) / 2,
+      y: (t1.clientY + t2.clientY) / 2
+    };
+  }
+
+  function buildWarehouse() {
+    warehouseRoot.innerHTML = '';
+
+    basePlane = createEl('a-box', {
+      position: '0 -0.02 -0.18',
+      width: '5.10',
+      height: '0.05',
+      depth: '3.05',
+      color: '#bffbff',
+      opacity: '0.92',
+      shadow: 'receive: true'
     });
-  });
+    warehouseRoot.appendChild(basePlane);
 
-  if(showMsg) updateInfo('<b>Resaltado limpio.</b><br>Busca rack, local o NP demo.');
-}
+    glowPlane = createEl('a-plane', {
+      position: '0 0 -0.18',
+      width: '4.72',
+      height: '2.72',
+      rotation: '-90 0 0',
+      color: '#08172e',
+      opacity: '0.96'
+    });
+    warehouseRoot.appendChild(glowPlane);
 
-function highlightRack(id){
-  clearHighlight(false);
-  const entry = rackMap.get(id);
-  if(!entry) return;
+    const border1 = createEl('a-box', {
+      position: '0 0.002 -1.49',
+      width: '4.72',
+      height: '0.01',
+      depth: '0.03',
+      color: '#2e546e'
+    });
+    const border2 = createEl('a-box', {
+      position: '0 0.002 1.13',
+      width: '4.72',
+      height: '0.01',
+      depth: '0.03',
+      color: '#2e546e'
+    });
+    const border3 = createEl('a-box', {
+      position: '-2.36 0.002 -0.18',
+      width: '0.03',
+      height: '0.01',
+      depth: '2.64',
+      color: '#2e546e'
+    });
+    const border4 = createEl('a-box', {
+      position: '2.36 0.002 -0.18',
+      width: '0.03',
+      height: '0.01',
+      depth: '2.64',
+      color: '#2e546e'
+    });
+    warehouseRoot.appendChild(border1);
+    warehouseRoot.appendChild(border2);
+    warehouseRoot.appendChild(border3);
+    warehouseRoot.appendChild(border4);
 
-  entry.group.querySelectorAll('a-box').forEach(box => {
-    box.setAttribute('emissive','#ffe000');
-    box.setAttribute('emissiveIntensity','0.40');
-  });
+    zoneGroup = createEl('a-entity', {});
+    warehouseRoot.appendChild(zoneGroup);
 
-  const r = entry.meta;
-  updateInfo(
-    `<b>${r.id}</b><br>` +
-    `Ocupación: <b>${r.occ}/${r.cap}</b> (${Math.round(r.occ/r.cap*100)}%)<br>` +
-    `Niveles: <b>${r.levels}</b> · Locales/nivel: <b>${r.bays}</b><br>` +
-    `NP demo: ${r.nps.join(', ')}`
-  );
-}
+    const zoneA = createEl('a-box', {
+      position: '-2.07 0.006 -1.28',
+      width: '0.42',
+      height: '0.015',
+      depth: '0.20',
+      color: '#49d2cc'
+    });
+    const zoneB = createEl('a-box', {
+      position: '2.06 0.006 -1.28',
+      width: '0.46',
+      height: '0.015',
+      depth: '0.20',
+      color: '#b56cf0'
+    });
+    const zoneC = createEl('a-box', {
+      position: '-2.07 0.006 0.94',
+      width: '0.46',
+      height: '0.015',
+      depth: '0.20',
+      color: '#ef9d3c'
+    });
+    const zoneD = createEl('a-box', {
+      position: '2.05 0.006 0.94',
+      width: '0.46',
+      height: '0.015',
+      depth: '0.20',
+      color: '#57bfff'
+    });
 
-function highlightLocal(rackId,level,bay){
-  clearHighlight(false);
+    zoneGroup.appendChild(zoneA);
+    zoneGroup.appendChild(zoneB);
+    zoneGroup.appendChild(zoneC);
+    zoneGroup.appendChild(zoneD);
 
-  const entry = rackMap.get(rackId);
-  if(!entry){
-    updateInfo(`No encontré rack: <b>${rackId}</b>`);
-    return;
+    aisleGroup = createEl('a-entity', {});
+    warehouseRoot.appendChild(aisleGroup);
+
+    const aisle1 = createEl('a-box', {
+      position: '0 0.007 -0.64',
+      width: '4.05',
+      height: '0.012',
+      depth: '0.05',
+      color: '#8a7a26'
+    });
+    const aisle2 = createEl('a-box', {
+      position: '0 0.007 0.02',
+      width: '4.05',
+      height: '0.012',
+      depth: '0.05',
+      color: '#8a7a26'
+    });
+    const aisle3 = createEl('a-box', {
+      position: '0 0.007 0.68',
+      width: '4.05',
+      height: '0.012',
+      depth: '0.05',
+      color: '#8a7a26'
+    });
+    aisleGroup.appendChild(aisle1);
+    aisleGroup.appendChild(aisle2);
+    aisleGroup.appendChild(aisle3);
+
+    pinCylinder = createEl('a-cylinder', {
+      position: '0 0.43 -0.18',
+      radius: '0.08',
+      height: '0.86',
+      color: '#ffd21e',
+      opacity: '0.98'
+    });
+    pinTopSphere = createEl('a-sphere', {
+      position: '0 0.89 -0.18',
+      radius: '0.11',
+      color: '#24d4ff'
+    });
+
+    warehouseRoot.appendChild(pinCylinder);
+    warehouseRoot.appendChild(pinTopSphere);
+
+    labelGroup = createEl('a-entity', {});
+    warehouseRoot.appendChild(labelGroup);
+
+    rackDefs.forEach(def => buildRack(def));
+    buildRoutePath();
+    applyModeVisuals();
   }
 
-  const cell = entry.cells.find(c => c.level===level && c.bay===bay);
-  if(!cell){
-    updateInfo(`No encontré local: <b>${rackId}-${level}-${String(bay).padStart(2,'0')}</b>`);
-    return;
+  function buildRack(def) {
+    const rack = createEl('a-entity', {
+      position: `${def.x} 0 ${def.z}`
+    });
+
+    const rackWidth = 0.72;
+    const rackDepth = 0.16;
+    const rackHeight = 0.80;
+    const postW = 0.02;
+    const beamH = 0.016;
+    const levelGap = 0.15;
+    const baseY = 0.05;
+    const bays = def.bays;
+    const levels = def.levels;
+
+    const visualParts = [];
+    const localIds = [];
+    const localEntities = [];
+
+    // Posts
+    const postXs = [];
+    for (let i = 0; i <= bays; i++) {
+      const x = -rackWidth / 2 + (rackWidth / bays) * i;
+      postXs.push(x);
+      const leftPost = createEl('a-box', {
+        position: `${x} ${rackHeight/2} ${-rackDepth/2}`,
+        width: `${postW}`,
+        height: `${rackHeight}`,
+        depth: `${postW}`,
+        color: '#a5b8ca'
+      });
+      const rightPost = createEl('a-box', {
+        position: `${x} ${rackHeight/2} ${rackDepth/2}`,
+        width: `${postW}`,
+        height: `${rackHeight}`,
+        depth: `${postW}`,
+        color: '#a5b8ca'
+      });
+      rack.appendChild(leftPost);
+      rack.appendChild(rightPost);
+      visualParts.push(leftPost, rightPost);
+    }
+
+    // Beams & shelves
+    for (let level = 0; level < levels; level++) {
+      const y = baseY + level * levelGap;
+
+      const beamFront = createEl('a-box', {
+        position: `0 ${y} ${rackDepth/2}`,
+        width: `${rackWidth}`,
+        height: `${beamH}`,
+        depth: `${postW}`,
+        color: '#5f7284'
+      });
+      const beamBack = createEl('a-box', {
+        position: `0 ${y} ${-rackDepth/2}`,
+        width: `${rackWidth}`,
+        height: `${beamH}`,
+        depth: `${postW}`,
+        color: '#5f7284'
+      });
+      rack.appendChild(beamFront);
+      rack.appendChild(beamBack);
+      visualParts.push(beamFront, beamBack);
+
+      for (let bay = 0; bay < bays; bay++) {
+        const bayCenterX = -rackWidth / 2 + (rackWidth / bays) * bay + (rackWidth / bays) / 2;
+        const localId = `${def.id}-${level+1}-${String(bay+1).padStart(2, '0')}`;
+        const occupied = ((def.id.charCodeAt(2) + level + bay) % 3 !== 0);
+        const isReserved = ((def.id.charCodeAt(3) + level + bay) % 11 === 0);
+
+        const localBox = createEl('a-box', {
+          position: `${bayCenterX} ${y + 0.048} 0`,
+          width: `${(rackWidth / bays) - 0.018}`,
+          height: '0.078',
+          depth: `${rackDepth - 0.028}`,
+          color: occupied ? '#7388a0' : '#2c3750',
+          opacity: occupied ? '0.96' : '0.55'
+        });
+
+        localBox.dataset.localId = localId;
+        localBox.dataset.rackId = def.id;
+        localBox.dataset.occupied = occupied ? '1' : '0';
+        localBox.dataset.reserved = isReserved ? '1' : '0';
+        localBox.classList.add('selectable-local');
+
+        rack.appendChild(localBox);
+
+        const obj = localBox.object3D;
+        if (obj) {
+          obj.userData.selectMeta = {
+            type: 'local',
+            rackId: def.id,
+            localId
+          };
+        } else {
+          localBox.addEventListener('loaded', () => {
+            localBox.object3D.userData.selectMeta = {
+              type: 'local',
+              rackId: def.id,
+              localId
+            };
+          }, { once: true });
+        }
+
+        localIds.push(localId);
+        localEntities.push(localBox);
+        localMap[localId] = {
+          localId,
+          rackId: def.id,
+          occupied,
+          reserved: isReserved,
+          el: localBox
+        };
+      }
+    }
+
+    // Rack label
+    const labelBase = createEl('a-plane', {
+      position: `0 0.92 0`,
+      width: '0.40',
+      height: '0.11',
+      color: '#0d1b33',
+      opacity: '0.95'
+    });
+    const labelText = createEl('a-text', {
+      value: def.id,
+      position: '0 0 0.01',
+      align: 'center',
+      color: '#7fdcff',
+      width: '1.5'
+    });
+    labelBase.appendChild(labelText);
+    rack.appendChild(labelBase);
+
+    // Precise rack hitbox aligned to visual rack
+    const rackHit = createEl('a-box', {
+      position: `0 ${rackHeight/2} 0`,
+      width: `${rackWidth + 0.06}`,
+      height: `${rackHeight + 0.16}`,
+      depth: `${rackDepth + 0.08}`,
+      opacity: '0.001',
+      visible: 'true'
+    });
+    rackHit.classList.add('selectable-rack');
+    rack.appendChild(rackHit);
+
+    rackHit.addEventListener('loaded', () => {
+      rackHit.object3D.userData.selectMeta = {
+        type: 'rack',
+        rackId: def.id
+      };
+      selectableRoots.push(rackHit.object3D);
+    }, { once: true });
+
+    rack.addEventListener('loaded', () => {
+      localEntities.forEach(el => {
+        if (el.object3D) selectableRoots.push(el.object3D);
+      });
+    }, { once: true });
+
+    warehouseRoot.appendChild(rack);
+
+    rackMap[def.id] = {
+      id: def.id,
+      def,
+      el: rack,
+      hitEl: rackHit,
+      visualParts,
+      localIds,
+      localEntities,
+      labelBase,
+      labelText
+    };
+
+    rackVisuals[def.id] = {
+      normalBeam: '#5f7284',
+      normalPost: '#a5b8ca'
+    };
   }
 
-  entry.group.querySelectorAll('a-box').forEach(box => {
-    box.setAttribute('emissive','#4fc3f7');
-    box.setAttribute('emissiveIntensity','0.16');
-  });
+  function buildRoutePath() {
+    // demo route path
+    const points = [
+      { x: -1.58, z: 0.68 },
+      { x: -1.58, z: 0.02 },
+      { x: -0.52, z: 0.02 },
+      { x: -0.52, z: -0.64 },
+      { x: 0.54, z: -0.64 },
+      { x: 1.60, z: -0.64 }
+    ];
 
-  const lh = document.getElementById('localHighlight');
-  lh.innerHTML = '';
-  lh.setAttribute('visible','true');
+    for (let i = 0; i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i+1];
+      const dx = p2.x - p1.x;
+      const dz = p2.z - p1.z;
+      const length = Math.sqrt(dx * dx + dz * dz);
+      const angle = Math.atan2(dx, dz) * 180 / Math.PI;
 
-  const worldX = entry.meta.x + cell.x;
-  const worldY = cell.y;
-  const worldZ = entry.meta.z + cell.z;
+      const line = createEl('a-box', {
+        position: `${(p1.x + p2.x)/2} 0.014 ${(p1.z + p2.z)/2}`,
+        width: '0.06',
+        height: '0.012',
+        depth: `${length}`,
+        color: '#b86dff',
+        rotation: `0 ${angle} 0`,
+        visible: 'false'
+      });
+      warehouseRoot.appendChild(line);
+      routeLines.push(line);
+    }
 
-  lh.appendChild(E('a-box', {
-    position:`${worldX} ${worldY} ${worldZ}`,
-    width:'0.26',
-    height:'0.20',
-    depth:'0.24',
-    color:'#ffe000',
-    opacity:'0.34',
-    transparent:'true'
-  }));
-
-  lh.appendChild(E('a-cylinder', {
-    position:`${worldX} ${worldY+0.28} ${worldZ}`,
-    radius:'0.08',
-    height:'0.28',
-    color:'#ffe000',
-    opacity:'0.82',
-    transparent:'true'
-  }));
-
-  lh.appendChild(E('a-sphere', {
-    position:`${worldX} ${worldY+0.46} ${worldZ}`,
-    radius:'0.10',
-    color:'#4fc3f7',
-    opacity:'0.95',
-    transparent:'true'
-  }));
-
-  lh.appendChild(E('a-text', {
-    value:`${rackId}-${level}-${String(bay).padStart(2,'0')}`,
-    position:`${worldX-0.45} ${worldY+0.62} ${worldZ}`,
-    rotation:'-70 0 0',
-    color:'#ffffff',
-    width:'2.2'
-  }));
-
-  updateInfo(
-    `<b>Local encontrado</b><br>` +
-    `Ubicación: <b>${rackId}-${level}-${String(bay).padStart(2,'0')}</b><br>` +
-    `Rack: <b>${rackId}</b> · Nivel: <b>${level}</b> · Local: <b>${String(bay).padStart(2,'0')}</b>`
-  );
-}
-
-function normalizeSearch(text){
-  return text
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g,'')
-    .replace(/[–—]/g,'-');
-}
-
-function searchTarget(){
-  const q = normalizeSearch(document.getElementById('searchInput').value);
-
-  if(!q){
-    updateInfo('Escribe un rack, local o NP demo.');
-    return;
+    points.forEach(p => {
+      const dot = createEl('a-cylinder', {
+        position: `${p.x} 0.016 ${p.z}`,
+        radius: '0.035',
+        height: '0.012',
+        color: '#e8b1ff',
+        visible: 'false'
+      });
+      warehouseRoot.appendChild(dot);
+      routeLines.push(dot);
+    });
   }
 
-  const local = q.match(/^(RC\d{2})-(\d{1,2})-(\d{1,2})$/);
-  if(local){
-    highlightLocal(local[1],parseInt(local[2],10),parseInt(local[3],10));
-    return;
+  function applyModeVisuals() {
+    const isOcc = state.mode === 'occupancy';
+    const isRoute = state.mode === 'route';
+
+    Object.values(localMap).forEach(local => {
+      const el = local.el;
+      if (!el) return;
+
+      if (state.selectedLocal === local.localId) {
+        el.setAttribute('color', '#ffe56d');
+        el.setAttribute('opacity', '1');
+        return;
+      }
+
+      if (isOcc) {
+        if (local.reserved) {
+          el.setAttribute('color', '#e96d6d');
+          el.setAttribute('opacity', '0.98');
+        } else if (local.occupied) {
+          el.setAttribute('color', '#4bcd73');
+          el.setAttribute('opacity', '0.96');
+        } else {
+          el.setAttribute('color', '#424f68');
+          el.setAttribute('opacity', '0.55');
+        }
+      } else {
+        el.setAttribute('color', local.occupied ? '#7388a0' : '#2c3750');
+        el.setAttribute('opacity', local.occupied ? '0.96' : '0.55');
+      }
+    });
+
+    Object.values(rackMap).forEach(rack => {
+      const selected = state.selectedRack === rack.id;
+      rack.visualParts.forEach((part, idx) => {
+        const isPost = idx % 2 === 0 || idx % 2 === 1;
+        part.setAttribute('color', selected ? (isPost ? '#8af2ff' : '#ffee7d') : (isPost ? '#a5b8ca' : '#5f7284'));
+      });
+
+      rack.labelBase.setAttribute('color', selected ? '#19365c' : '#0d1b33');
+      rack.labelText.setAttribute('color', selected ? '#ffe56d' : '#7fdcff');
+    });
+
+    routeLines.forEach(el => el.setAttribute('visible', isRoute ? 'true' : 'false'));
+
+    basePlane.setAttribute('visible', state.showBase ? 'true' : 'false');
+    pinCylinder.setAttribute('visible', state.showBase ? 'true' : 'false');
+    pinTopSphere.setAttribute('visible', state.showBase ? 'true' : 'false');
+
+    glowPlane.setAttribute('opacity', state.visual ? '0.96' : '0.72');
+
+    labelGroup.setAttribute('visible', state.detail ? 'true' : 'false');
+
+    setInfoBySelection();
   }
 
-  if(rackMap.has(q)){
-    highlightRack(q);
-    return;
+  function setInfoBySelection() {
+    if (state.selectedLocal && localMap[state.selectedLocal]) {
+      const l = localMap[state.selectedLocal];
+      setInfo(`
+        <b>Local seleccionado:</b> ${l.localId}<br>
+        <b>Rack:</b> ${l.rackId}<br>
+        <b>Ocupado:</b> ${l.occupied ? 'Sí' : 'No'}<br>
+        <b>Reservado:</b> ${l.reserved ? 'Sí' : 'No'}<br>
+        <span class="mode-tag ${modeClass()}">${modeLabel()}</span>
+        <div class="hint">
+          Ya puedes seguir tocando otros locales o usar búsqueda.
+        </div>
+      `);
+      return;
+    }
+
+    if (state.selectedRack && rackMap[state.selectedRack]) {
+      const r = rackMap[state.selectedRack];
+      setInfo(`
+        <b>Rack seleccionado:</b> ${r.id}<br>
+        <b>Zona:</b> ${r.def.zone}<br>
+        <b>Niveles:</b> ${r.def.levels}<br>
+        <b>Locales:</b> ${r.localIds.length}<br>
+        <span class="mode-tag ${modeClass()}">${modeLabel()}</span>
+        <div class="hint">
+          Toca un local dentro del rack para selección más específica.
+        </div>
+      `);
+      return;
+    }
+
+    setInfo(`
+      <b>Marcador detectado.</b><br>
+      Toca un rack o un local para seleccionarlo.<br>
+      <span class="mode-tag ${modeClass()}">${modeLabel()}</span>
+      <div class="hint">
+        Búsqueda demo: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.
+      </div>
+    `);
   }
 
-  const hits = RACKS.filter(r => r.nps.some(np => np.includes(q)));
-  if(hits.length){
-    clearHighlight(false);
+  function selectRack(rackId) {
+    if (!rackMap[rackId]) return;
+    state.selectedRack = rackId;
+    state.selectedLocal = null;
+    applyModeVisuals();
+  }
 
-    hits.forEach(r => {
-      const entry = rackMap.get(r.id);
-      entry.group.querySelectorAll('a-box').forEach(box => {
-        box.setAttribute('emissive','#2ecc71');
-        box.setAttribute('emissiveIntensity','0.40');
+  function selectLocal(localId) {
+    const local = localMap[localId];
+    if (!local) return;
+    state.selectedRack = local.rackId;
+    state.selectedLocal = localId;
+    applyModeVisuals();
+  }
+
+  function clearSelection() {
+    state.selectedRack = null;
+    state.selectedLocal = null;
+    applyModeVisuals();
+  }
+
+  function searchTarget(q) {
+    const query = (q || '').trim().toUpperCase();
+    if (!query) {
+      setInfo(`
+        <b>Escribe algo para buscar.</b><br>
+        Ejemplos: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>.
+      `);
+      return;
+    }
+
+    if (rackMap[query]) {
+      selectRack(query);
+      return;
+    }
+
+    if (localMap[query]) {
+      selectLocal(query);
+      return;
+    }
+
+    if (inventoryMap[query]) {
+      selectLocal(inventoryMap[query]);
+      return;
+    }
+
+    setInfo(`
+      <b>No encontré:</b> ${query}<br>
+      <div class="hint">
+        Intenta con rack, local o NP demo.<br>
+        Ejemplos: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.
+      </div>
+    `);
+  }
+
+  function resetView() {
+    state.scale = 0.60;
+    state.rotY = 0;
+    state.posX = 0;
+    state.posZ = 0;
+    state.mode = 'normal';
+    state.showBase = true;
+    state.detail = true;
+    state.visual = true;
+    clearSelection();
+    applyTransform();
+    applyModeVisuals();
+  }
+
+  function screenToNDC(clientX, clientY) {
+    const rect = scene.canvas.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / rect.width) * 2 - 1,
+      y: -((clientY - rect.top) / rect.height) * 2 + 1
+    };
+  }
+
+  function getIntersections(clientX, clientY) {
+    if (!rendererRef || !cameraRef || !raycaster || !scene.canvas) return [];
+    const ndc = screenToNDC(clientX, clientY);
+    raycaster.setFromCamera({ x: ndc.x, y: ndc.y }, cameraRef);
+    return raycaster.intersectObjects(selectableRoots, true);
+  }
+
+  function findSelectMeta(obj) {
+    let current = obj;
+    while (current) {
+      if (current.userData && current.userData.selectMeta) {
+        return current.userData.selectMeta;
+      }
+      current = current.parent;
+    }
+    return null;
+  }
+
+  function handleTapSelect(clientX, clientY) {
+    const hits = getIntersections(clientX, clientY);
+    if (!hits.length) return false;
+
+    for (const hit of hits) {
+      const meta = findSelectMeta(hit.object);
+      if (!meta) continue;
+
+      if (meta.type === 'local') {
+        selectLocal(meta.localId);
+        return true;
+      }
+      if (meta.type === 'rack') {
+        selectRack(meta.rackId);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function bindUI() {
+    document.getElementById('btnZoomIn').onclick = () => {
+      state.scale = clamp(state.scale + 0.05, 0.28, 1.45);
+      applyTransform();
+    };
+
+    document.getElementById('btnZoomOut').onclick = () => {
+      state.scale = clamp(state.scale - 0.05, 0.28, 1.45);
+      applyTransform();
+    };
+
+    document.getElementById('btnRotL').onclick = () => {
+      state.rotY -= 8;
+      applyTransform();
+    };
+
+    document.getElementById('btnRotR').onclick = () => {
+      state.rotY += 8;
+      applyTransform();
+    };
+
+    document.getElementById('btnUp').onclick = () => {
+      state.posZ -= 0.08;
+      applyTransform();
+    };
+
+    document.getElementById('btnDown').onclick = () => {
+      state.posZ += 0.08;
+      applyTransform();
+    };
+
+    document.getElementById('btnLeft').onclick = () => {
+      state.posX -= 0.08;
+      applyTransform();
+    };
+
+    document.getElementById('btnRight').onclick = () => {
+      state.posX += 0.08;
+      applyTransform();
+    };
+
+    document.getElementById('btnNormal').onclick = () => {
+      state.mode = 'normal';
+      applyModeVisuals();
+    };
+
+    document.getElementById('btnOcc').onclick = () => {
+      state.mode = 'occupancy';
+      applyModeVisuals();
+    };
+
+    document.getElementById('btnRoute').onclick = () => {
+      state.mode = (state.mode === 'route') ? 'normal' : 'route';
+      applyModeVisuals();
+    };
+
+    document.getElementById('btnVisual').onclick = () => {
+      state.visual = !state.visual;
+      applyModeVisuals();
+    };
+
+    document.getElementById('btnBase').onclick = () => {
+      state.showBase = !state.showBase;
+      applyModeVisuals();
+    };
+
+    document.getElementById('btnDetail').onclick = () => {
+      state.detail = !state.detail;
+      applyModeVisuals();
+    };
+
+    document.getElementById('btnReset').onclick = () => {
+      resetView();
+    };
+
+    document.getElementById('btnClear').onclick = () => {
+      searchInput.value = '';
+      clearSelection();
+      setInfoBySelection();
+    };
+
+    document.getElementById('btnSearch').onclick = () => {
+      searchTarget(searchInput.value);
+    };
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') searchTarget(searchInput.value);
+    });
+
+    document.getElementById('btnHideControls').onclick = () => {
+      state.controlsHidden = true;
+      controls.classList.add('hidden');
+      showControlsBtn.classList.add('visible');
+    };
+
+    showControlsBtn.onclick = () => {
+      state.controlsHidden = false;
+      controls.classList.remove('hidden');
+      showControlsBtn.classList.remove('visible');
+    };
+  }
+
+  function bindMarkerEvents() {
+    marker.addEventListener('markerFound', () => setMarkerState(true));
+    marker.addEventListener('markerLost', () => setMarkerState(false));
+  }
+
+  function bindTouchGestures() {
+    scene.addEventListener('loaded', () => {
+      rendererRef = scene.renderer;
+      cameraRef = scene.camera;
+      raycaster = new THREE.Raycaster();
+
+      const canvas = scene.canvas;
+      if (!canvas) return;
+
+      canvas.style.touchAction = 'none';
+
+      canvas.addEventListener('touchstart', (e) => {
+        if (!state.markerVisible) return;
+        if (e.touches.length === 1) {
+          const t = e.touches[0];
+          state.gesture.active = true;
+          state.gesture.moved = false;
+          state.gesture.twoFinger = false;
+          state.gesture.startX = t.clientX;
+          state.gesture.startY = t.clientY;
+          state.gesture.startRotY = state.rotY;
+        } else if (e.touches.length === 2) {
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          const mid = midpoint(t1, t2);
+
+          state.gesture.active = true;
+          state.gesture.moved = true;
+          state.gesture.twoFinger = true;
+          state.gesture.startDist = dist(t1, t2);
+          state.gesture.startScale = state.scale;
+          state.gesture.startMidX = mid.x;
+          state.gesture.startMidY = mid.y;
+          state.gesture.startPosX = state.posX;
+          state.gesture.startPosZ = state.posZ;
+        }
+      }, { passive: true });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (!state.markerVisible || !state.gesture.active) return;
+
+        if (e.touches.length === 1 && !state.gesture.twoFinger) {
+          const t = e.touches[0];
+          const dx = t.clientX - state.gesture.startX;
+          const dy = t.clientY - state.gesture.startY;
+
+          if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+            state.gesture.moved = true;
+          }
+
+          // rotation with one finger
+          state.rotY = state.gesture.startRotY + dx * 0.22;
+          applyTransform();
+        } else if (e.touches.length === 2) {
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          const currentDist = dist(t1, t2);
+          const mid = midpoint(t1, t2);
+
+          const scaleFactor = currentDist / Math.max(1, state.gesture.startDist);
+          state.scale = clamp(state.gesture.startScale * scaleFactor, 0.28, 1.45);
+
+          const dx = mid.x - state.gesture.startMidX;
+          const dy = mid.y - state.gesture.startMidY;
+
+          state.posX = state.gesture.startPosX + dx * 0.0016;
+          state.posZ = state.gesture.startPosZ + dy * 0.0016;
+
+          applyTransform();
+        }
+      }, { passive: true });
+
+      canvas.addEventListener('touchend', (e) => {
+        if (!state.markerVisible) return;
+
+        if (state.gesture.active && !state.gesture.twoFinger && !state.gesture.moved) {
+          const changed = e.changedTouches[0];
+          if (changed) {
+            handleTapSelect(changed.clientX, changed.clientY);
+          }
+        }
+
+        if (e.touches.length === 0) {
+          state.gesture.active = false;
+          state.gesture.twoFinger = false;
+          state.gesture.moved = false;
+        } else if (e.touches.length === 1) {
+          const t = e.touches[0];
+          state.gesture.active = true;
+          state.gesture.twoFinger = false;
+          state.gesture.moved = false;
+          state.gesture.startX = t.clientX;
+          state.gesture.startY = t.clientY;
+          state.gesture.startRotY = state.rotY;
+        }
+      }, { passive: true });
+
+      // fallback click for desktop
+      canvas.addEventListener('click', (e) => {
+        if (!state.markerVisible) return;
+        handleTapSelect(e.clientX, e.clientY);
       });
     });
-
-    updateInfo(`<b>NP demo encontrado:</b> ${q}<br>Ubicaciones: <b>${hits.map(h=>h.id).join(', ')}</b>`);
-    return;
   }
 
-  updateInfo(`No encontré: <b>${q}</b>`);
-}
-
-function toggleRoute(){
-  routeVisible = !routeVisible;
-  buildRoute(routeVisible);
-  applyTransforms();
-
-  updateInfo(routeVisible ? '<b>Ruta pick activa.</b><br>Recorrido ilustrativo sobre el layout.' : '<b>Ruta pick oculta.</b>');
-}
-
-function toggleHeatmap(){
-  heatmap = !heatmap;
-  buildWarehouse();
-  applyTransforms();
-
-  updateInfo(heatmap ? '<b>Ocupación activa.</b><br>Verde bajo, naranja medio, rojo crítico.' : '<b>Ocupación desactivada.</b>');
-}
-
-function toggleStyleMode(){
-  styleMode = isHolo() ? 'realista' : 'holograma';
-  buildWarehouse();
-  applyTransforms();
-
-  updateInfo(isHolo() ? '<b>Modo holograma activo.</b><br>Más brillo, transparencia y estilo AR.' : '<b>Modo realista activo.</b><br>Más sólido y operativo.');
-}
-
-function toggleDetail(){
-  highDetail = !highDetail;
-  buildWarehouse();
-  applyTransforms();
-
-  updateInfo(highDetail ? '<b>Detalle alto activo.</b><br>Más elementos visuales.' : '<b>Detalle bajo activo.</b><br>Mejor rendimiento en celular.');
-}
-
-function toggleWarehouse(){
-  warehouseVisible = !warehouseVisible;
-  document.getElementById('warehouse').setAttribute('visible',warehouseVisible ? 'true' : 'false');
-  updateInfo(warehouseVisible ? '<b>Almacén visible.</b>' : '<b>Almacén oculto.</b>');
-}
-
-function toggleAnchor(){
-  anchorVisible = !anchorVisible;
-  document.getElementById('anchorGroup').setAttribute('visible',anchorVisible ? 'true' : 'false');
-  updateInfo(anchorVisible ? '<b>Base AR visible.</b>' : '<b>Base AR oculta.</b>');
-}
-
-function scaleWarehouse(mult){
-  currentScale = Math.max(0.024,Math.min(0.16,currentScale*mult));
-  applyTransforms();
-  updateInfo(`<b>Escala:</b> ${currentScale.toFixed(3)}`);
-}
-
-function rotateWarehouse(deg){
-  currentRotation += deg;
-  applyTransforms();
-}
-
-function moveWarehouse(dx,dz){
-  offsetX += dx;
-  offsetZ += dz;
-  applyTransforms();
-  updateInfo(`<b>Offset:</b> X ${offsetX.toFixed(2)} · Z ${offsetZ.toFixed(2)}`);
-}
-
-function resetWarehouse(){
-  currentScale = 0.060;
-  currentRotation = 0;
-  offsetX = 0;
-  offsetZ = 0;
-  routeVisible = false;
-  warehouseVisible = true;
-
-  document.getElementById('warehouse').setAttribute('visible','true');
-  document.getElementById('routeGroup').setAttribute('visible','false');
-
-  buildWarehouse();
-  applyTransforms();
-  clearHighlight(false);
-
-  updateInfo('<b>Vista reiniciada.</b><br>Layout centrado sobre el marcador.');
-}
-
-function hideControls(){
-  document.getElementById('controls').classList.add('hidden');
-  document.getElementById('showControls').classList.add('show');
-}
-
-function showControls(){
-  document.getElementById('controls').classList.remove('hidden');
-  document.getElementById('showControls').classList.remove('show');
-}
-
-/* Gestos táctiles */
-let gestureState = {
-  mode:null,
-  lastX:0,
-  lastY:0,
-  lastDistance:0,
-  lastMidX:0,
-  lastMidY:0
-};
-
-function isTouchingUI(target){
-  return !!target.closest('#controls, #showControls, #topbar, #status, input, button');
-}
-
-function getTouchDistance(t1,t2){
-  const dx = t1.clientX - t2.clientX;
-  const dy = t1.clientY - t2.clientY;
-  return Math.sqrt(dx*dx + dy*dy);
-}
-
-function getMidpoint(t1,t2){
-  return {
-    x:(t1.clientX + t2.clientX) / 2,
-    y:(t1.clientY + t2.clientY) / 2
-  };
-}
-
-document.addEventListener('touchstart', function(e){
-  if(isTouchingUI(e.target)) return;
-
-  if(e.touches.length === 1){
-    gestureState.mode = 'rotate';
-    gestureState.lastX = e.touches[0].clientX;
-    gestureState.lastY = e.touches[0].clientY;
-  }
-
-  if(e.touches.length === 2){
-    gestureState.mode = 'pinch';
-    gestureState.lastDistance = getTouchDistance(e.touches[0], e.touches[1]);
-
-    const mid = getMidpoint(e.touches[0], e.touches[1]);
-    gestureState.lastMidX = mid.x;
-    gestureState.lastMidY = mid.y;
-  }
-}, {passive:false});
-
-document.addEventListener('touchmove', function(e){
-  if(isTouchingUI(e.target)) return;
-
-  if(gestureState.mode === 'rotate' && e.touches.length === 1){
-    e.preventDefault();
-
-    const x = e.touches[0].clientX;
-    const dx = x - gestureState.lastX;
-
-    if(Math.abs(dx) > 2){
-      rotateWarehouse(dx * 0.18);
-      gestureState.lastX = x;
-    }
-  }
-
-  if(gestureState.mode === 'pinch' && e.touches.length === 2){
-    e.preventDefault();
-
-    const distance = getTouchDistance(e.touches[0], e.touches[1]);
-    const ratio = distance / gestureState.lastDistance;
-
-    if(ratio > 1.015 || ratio < 0.985){
-      scaleWarehouse(ratio);
-      gestureState.lastDistance = distance;
-    }
-
-    const mid = getMidpoint(e.touches[0], e.touches[1]);
-    const dx = mid.x - gestureState.lastMidX;
-    const dy = mid.y - gestureState.lastMidY;
-
-    if(Math.abs(dx) > 2 || Math.abs(dy) > 2){
-      moveWarehouse(dx * 0.0025, dy * 0.0025);
-      gestureState.lastMidX = mid.x;
-      gestureState.lastMidY = mid.y;
-    }
-  }
-}, {passive:false});
-
-document.addEventListener('touchend', function(){
-  gestureState.mode = null;
-}, {passive:true});
-
-window.addEventListener('load', () => {
-  try{
+  function init() {
     buildWarehouse();
-    applyTransforms();
-
-    const marker = document.getElementById('hiroMarker');
-    const status = document.getElementById('status');
-
-    marker.addEventListener('markerFound', () => {
-      status.textContent = 'Marcador detectado · MiniWMS AR activo';
-      status.classList.add('ok');
-      updateInfo('<b>Marcador detectado.</b><br>V8.2 activa: búsqueda corregida, gestos táctiles y selección por pantalla.');
-    });
-
-    marker.addEventListener('markerLost', () => {
-      status.textContent = 'Buscando marcador HIRO...';
-      status.classList.remove('ok');
-    });
-  }catch(err){
-    console.error(err);
-    updateInfo('<b>Error al cargar:</b><br>' + err.message);
+    applyTransform();
+    applyModeVisuals();
+    bindUI();
+    bindMarkerEvents();
+    bindTouchGestures();
+    setMarkerState(false);
   }
-});
-</script>
 
+  init();
+})();
+</script>
 </body>
 </html>
