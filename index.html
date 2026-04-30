@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.3.1 Selección Segura</title>
+<title>MiniWMS AR · V8.4 Control Táctil Seguro</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -15,11 +15,14 @@
   padding:0;
 }
 
-body{
+html,body{
+  width:100%;
+  height:100%;
   overflow:hidden;
   background:#02040a;
   font-family:'Segoe UI',Arial,sans-serif;
   color:#e0eaff;
+  touch-action:none;
 }
 
 #topbar{
@@ -33,6 +36,7 @@ body{
   background:linear-gradient(180deg,rgba(5,10,22,.90),rgba(5,10,22,.50));
   border-bottom:1px solid rgba(79,195,247,.22);
   backdrop-filter:blur(8px);
+  pointer-events:none;
 }
 
 #topbar h1{
@@ -63,6 +67,7 @@ body{
   font-size:11px;
   box-shadow:0 6px 18px rgba(0,0,0,.35);
   backdrop-filter:blur(8px);
+  pointer-events:none;
 }
 
 #status.ok{
@@ -85,6 +90,7 @@ body{
   backdrop-filter:blur(10px);
   max-height:64vh;
   overflow-y:auto;
+  touch-action:auto;
 }
 
 #controls.hidden{
@@ -106,6 +112,7 @@ body{
   font-size:13px;
   font-weight:800;
   box-shadow:0 8px 22px rgba(0,0,0,.42);
+  touch-action:auto;
 }
 
 #showControls.show{
@@ -234,7 +241,7 @@ button.red{
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.3.1</h1>
+  <h1>🏭 MiniWMS AR · V8.4</h1>
   <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y búsqueda</p>
 </div>
 
@@ -278,7 +285,8 @@ button.red{
   </div>
 
   <div id="hint">
-    Prueba: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.
+    Prueba: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.<br>
+    Con controles ocultos: 1 dedo gira. 2 dedos acercan o mueven.
   </div>
 
   <div style="margin-top:8px">
@@ -349,6 +357,9 @@ let currentRotation = 0;
 let offsetX = 0;
 let offsetZ = 0;
 
+let touchState = null;
+let suppressNextClick = false;
+
 function E(tag, attrs = {}){
   const el = document.createElement(tag);
   Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
@@ -388,6 +399,11 @@ function localPanelColor(){
 function makePickable(el, action){
   el.setAttribute('class', (el.getAttribute('class') || '') + ' pickable');
   el.addEventListener('click', function(e){
+    if(suppressNextClick){
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
     e.stopPropagation();
     action();
   });
@@ -723,17 +739,13 @@ function buildRack(parent,rack){
     }
   }
 
-  const rackLabel = E('a-text', {
+  group.appendChild(E('a-text', {
     value:rack.id,
     position:`${-width/2} ${height+0.12} ${-depth/2-0.18}`,
     rotation:'-70 0 0',
     color:'#4fc3f7',
     width:'2.0'
-  });
-
-  group.appendChild(rackLabel);
-
-  group.addEventListener('click', () => highlightRack(rack.id));
+  }));
 
   parent.appendChild(group);
   rackMap.set(rack.id,{meta:rack,group,cells});
@@ -1014,6 +1026,7 @@ function resetWarehouse(){
 function hideControls(){
   document.getElementById('controls').classList.add('hidden');
   document.getElementById('showControls').classList.add('show');
+  updateInfo('<b>Controles ocultos.</b><br>1 dedo gira. 2 dedos acercan o mueven.');
 }
 
 function showControls(){
@@ -1021,9 +1034,121 @@ function showControls(){
   document.getElementById('showControls').classList.remove('show');
 }
 
+function getTouchDistance(t1,t2){
+  const dx = t1.clientX - t2.clientX;
+  const dy = t1.clientY - t2.clientY;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+function getTouchMidpoint(t1,t2){
+  return {
+    x:(t1.clientX + t2.clientX)/2,
+    y:(t1.clientY + t2.clientY)/2
+  };
+}
+
+function bindSafeTouchControls(){
+  const scene = document.querySelector('a-scene');
+
+  function attach(){
+    const canvas = scene.canvas;
+    if(!canvas){
+      setTimeout(attach,300);
+      return;
+    }
+
+    canvas.style.touchAction = 'none';
+
+    canvas.addEventListener('touchstart', function(e){
+      if(e.touches.length === 1){
+        const t = e.touches[0];
+
+        touchState = {
+          mode:'rotate',
+          startX:t.clientX,
+          startY:t.clientY,
+          startRotation:currentRotation,
+          moved:false
+        };
+      }
+
+      if(e.touches.length === 2){
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const mid = getTouchMidpoint(t1,t2);
+
+        touchState = {
+          mode:'pinch',
+          startDistance:getTouchDistance(t1,t2),
+          startScale:currentScale,
+          startMidX:mid.x,
+          startMidY:mid.y,
+          startOffsetX:offsetX,
+          startOffsetZ:offsetZ,
+          moved:true
+        };
+      }
+    }, {passive:false});
+
+    canvas.addEventListener('touchmove', function(e){
+      if(!touchState) return;
+
+      e.preventDefault();
+
+      if(touchState.mode === 'rotate' && e.touches.length === 1){
+        const t = e.touches[0];
+        const dx = t.clientX - touchState.startX;
+        const dy = t.clientY - touchState.startY;
+
+        if(Math.abs(dx) > 4 || Math.abs(dy) > 4){
+          touchState.moved = true;
+          suppressNextClick = true;
+        }
+
+        currentRotation = touchState.startRotation + dx * 0.22;
+        applyTransforms();
+      }
+
+      if(touchState.mode === 'pinch' && e.touches.length === 2){
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = getTouchDistance(t1,t2);
+        const mid = getTouchMidpoint(t1,t2);
+        const ratio = dist / Math.max(1,touchState.startDistance);
+
+        currentScale = Math.max(0.024,Math.min(0.16,touchState.startScale * ratio));
+
+        offsetX = touchState.startOffsetX + (mid.x - touchState.startMidX) * 0.004;
+        offsetZ = touchState.startOffsetZ + (mid.y - touchState.startMidY) * 0.004;
+
+        suppressNextClick = true;
+        applyTransforms();
+      }
+    }, {passive:false});
+
+    canvas.addEventListener('touchend', function(){
+      if(touchState && touchState.moved){
+        suppressNextClick = true;
+        setTimeout(function(){
+          suppressNextClick = false;
+        },250);
+      }
+
+      touchState = null;
+    }, {passive:true});
+  }
+
+  if(scene.hasLoaded){
+    attach();
+  }else{
+    scene.addEventListener('loaded', attach);
+  }
+}
+
 window.addEventListener('load', () => {
   buildWarehouse();
   applyTransforms();
+  bindSafeTouchControls();
 
   const marker = document.getElementById('hiroMarker');
   const status = document.getElementById('status');
@@ -1031,7 +1156,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.3.1 Selección Segura activa. Sin hitboxes gigantes.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.4 Control táctil seguro activo.');
   });
 
   marker.addEventListener('markerLost', () => {
