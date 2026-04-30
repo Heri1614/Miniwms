@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.9 Layout Real Operativo</title>
+<title>MiniWMS AR · V9.0 CSV</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -191,6 +191,10 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
   line-height:1.4;
 }
 
+#csvInput{
+  display:none;
+}
+
 @media(max-width:420px){
   .mini-grid button{
     padding:9px 4px;
@@ -203,11 +207,13 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.9</h1>
-  <p>Layout real operativo</p>
+  <h1>🏭 MiniWMS AR · V9.0 CSV</h1>
+  <p>Layout real operativo con carga CSV</p>
 </div>
 
 <div id="status">Buscando HIRO...</div>
+
+<input id="csvInput" type="file" accept=".csv,text/csv" onchange="handleCSVFile(event)">
 
 <div id="controls">
   <div class="grid">
@@ -234,6 +240,9 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 
     <button class="primary" onclick="showResultRoute()">Ruta resultado</button>
     <button class="red" onclick="clearHighlight()">Limpiar</button>
+
+    <button class="green" onclick="openCSVPicker()">Cargar CSV</button>
+    <button class="yellow" onclick="restoreDemoData()">Datos demo</button>
   </div>
 
   <div class="mini-grid">
@@ -249,12 +258,12 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
   </div>
 
   <div id="info">
-    <b>Estado:</b> esperando marcador. Al detectarlo, se mostrará el layout real operativo.
+    <b>Estado:</b> esperando marcador. Datos demo activos.
   </div>
 
   <div id="hint">
-    Prueba: <b>98A1850</b>, <b>L2401-A</b>, <b>RC07-3-05</b>, <b>70CR</b>.<br>
-    V8.9 reorganiza el layout por flujo operativo real.
+    CSV esperado: <b>NP, LOTE, LOCAL, QTY, BOXES, STATUS</b>.<br>
+    Estados válidos: Disponible, Picking, Auditoría, Bloqueado.
   </div>
 
   <div style="margin-top:8px">
@@ -291,33 +300,28 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 const SPECIAL_RACKS = ['RC05','RC10','RC14','RC16'];
 
 const RACKS = [
-  /* Bloque de surtido / almacenaje principal */
   {id:'RC01', x:-8.9, z:-3.8, levels:4, bays:8, occ:22, cap:32, zone:'SURTIDO', depthType:'STD'},
   {id:'RC02', x:-6.2, z:-3.8, levels:4, bays:8, occ:26, cap:32, zone:'SURTIDO', depthType:'STD'},
   {id:'RC03', x:-3.5, z:-3.8, levels:4, bays:8, occ:14, cap:32, zone:'SURTIDO', depthType:'STD'},
 
-  /* Bloque central de auditoría / staging */
-  {id:'RC06', x:-8.9, z: 0.0, levels:5, bays:8, occ:35, cap:40, zone:'AUDITORIA', depthType:'STD'},
-  {id:'RC07', x:-6.2, z: 0.0, levels:5, bays:8, occ:37, cap:40, zone:'AUDITORIA', depthType:'STD'},
-  {id:'RC08', x:-3.5, z: 0.0, levels:5, bays:8, occ:16, cap:40, zone:'CENTRAL', depthType:'STD'},
+  {id:'RC06', x:-8.9, z:0.0, levels:5, bays:8, occ:35, cap:40, zone:'AUDITORIA', depthType:'STD'},
+  {id:'RC07', x:-6.2, z:0.0, levels:5, bays:8, occ:37, cap:40, zone:'AUDITORIA', depthType:'STD'},
+  {id:'RC08', x:-3.5, z:0.0, levels:5, bays:8, occ:16, cap:40, zone:'CENTRAL', depthType:'STD'},
 
-  /* Bloque packing / especial */
-  {id:'RC04', x: 0.2, z:-3.8, levels:4, bays:8, occ:28, cap:32, zone:'PACKING', depthType:'STD'},
-  {id:'RC05', x: 2.9, z:-3.8, levels:4, bays:8, occ:31, cap:32, zone:'ESPECIAL', depthType:'SPECIAL'},
-  {id:'RC09', x: 0.2, z: 0.0, levels:5, bays:8, occ:39, cap:40, zone:'PACKING', depthType:'STD'},
-  {id:'RC10', x: 2.9, z: 0.0, levels:5, bays:8, occ:32, cap:40, zone:'ESPECIAL', depthType:'SPECIAL'},
+  {id:'RC04', x:0.2, z:-3.8, levels:4, bays:8, occ:28, cap:32, zone:'PACKING', depthType:'STD'},
+  {id:'RC05', x:2.9, z:-3.8, levels:4, bays:8, occ:31, cap:32, zone:'ESPECIAL', depthType:'SPECIAL'},
+  {id:'RC09', x:0.2, z:0.0, levels:5, bays:8, occ:39, cap:40, zone:'PACKING', depthType:'STD'},
+  {id:'RC10', x:2.9, z:0.0, levels:5, bays:8, occ:32, cap:40, zone:'ESPECIAL', depthType:'SPECIAL'},
 
-  /* Recibo / reserva */
-  {id:'RC11', x:-8.9, z: 4.3, levels:4, bays:8, occ:12, cap:32, zone:'RECIBO', depthType:'STD'},
-  {id:'RC12', x:-6.2, z: 4.3, levels:4, bays:8, occ:29, cap:32, zone:'RECIBO', depthType:'STD'},
-  {id:'RC13', x:-3.5, z: 4.3, levels:4, bays:8, occ:18, cap:32, zone:'RECIBO', depthType:'STD'},
+  {id:'RC11', x:-8.9, z:4.3, levels:4, bays:8, occ:12, cap:32, zone:'RECIBO', depthType:'STD'},
+  {id:'RC12', x:-6.2, z:4.3, levels:4, bays:8, occ:29, cap:32, zone:'RECIBO', depthType:'STD'},
+  {id:'RC13', x:-3.5, z:4.3, levels:4, bays:8, occ:18, cap:32, zone:'RECIBO', depthType:'STD'},
 
-  /* Especial / embarque */
-  {id:'RC14', x: 0.2, z: 4.3, levels:4, bays:8, occ:30, cap:32, zone:'ESPECIAL', depthType:'SPECIAL'},
-  {id:'RC16', x: 3.1, z: 4.3, levels:5, bays:8, occ:38, cap:48, zone:'ESPECIAL', depthType:'DOUBLE'}
+  {id:'RC14', x:0.2, z:4.3, levels:4, bays:8, occ:30, cap:32, zone:'ESPECIAL', depthType:'SPECIAL'},
+  {id:'RC16', x:3.1, z:4.3, levels:5, bays:8, occ:38, cap:48, zone:'ESPECIAL', depthType:'DOUBLE'}
 ];
 
-const INVENTORY = [
+const DEMO_INVENTORY = [
   {np:'98A1850', lot:'L2401-A', local:'RC07-3-05', qty:27000, boxes:3, status:'Disponible'},
   {np:'98A1850', lot:'L2401-B', local:'RC14-2-06', qty:18000, boxes:2, status:'Picking'},
   {np:'98A1850', lot:'L2402-A', local:'RC12-4-02', qty:9000, boxes:1, status:'Auditoría'},
@@ -332,6 +336,9 @@ const INVENTORY = [
   {np:'1110CR', lot:'L2407-M', local:'RC14-4-03', qty:3000, boxes:3, status:'Picking'},
   {np:'D3301', lot:'L2501-D', local:'RC05-3-08', qty:7500, boxes:5, status:'Bloqueado'}
 ];
+
+let inventoryData = cloneInventory(DEMO_INVENTORY);
+let dataSourceLabel = 'Datos demo activos';
 
 let rackMap = new Map();
 let localMap = new Map();
@@ -358,6 +365,17 @@ let touchState = null;
 let suppressNextClick = false;
 let raycaster = null;
 
+function cloneInventory(arr){
+  return arr.map(i => ({
+    np:String(i.np || '').trim().toUpperCase(),
+    lot:String(i.lot || '').trim().toUpperCase(),
+    local:String(i.local || '').trim().toUpperCase(),
+    qty:Number(i.qty || 0),
+    boxes:Number(i.boxes || 0),
+    status:normalizeStatus(i.status || 'Disponible')
+  }));
+}
+
 function E(tag, attrs = {}){
   const el = document.createElement(tag);
   Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
@@ -376,6 +394,31 @@ function normalizeSearch(text){
     .replace(/[–—]/g,'-');
 }
 
+function normalizeHeader(text){
+  return String(text || '')
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,'')
+    .replace(/_/g,'');
+}
+
+function normalizeStatus(status){
+  const s = String(status || '')
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'');
+
+  if(s.includes('DISP')) return 'Disponible';
+  if(s.includes('PICK')) return 'Picking';
+  if(s.includes('AUDIT')) return 'Auditoría';
+  if(s.includes('BLOQ') || s.includes('BLOCK') || s.includes('HOLD')) return 'Bloqueado';
+
+  return 'Disponible';
+}
+
 function isSpecialRack(id){
   return SPECIAL_RACKS.includes(id);
 }
@@ -385,7 +428,11 @@ function isHolo(){
 }
 
 function getInventoryByLocal(local){
-  return INVENTORY.find(i => i.local === local);
+  return inventoryData.find(i => i.local === local);
+}
+
+function getInventoryByRack(rackId){
+  return inventoryData.filter(i => i.local.startsWith(rackId + '-'));
 }
 
 function getStatusColor(status){
@@ -457,6 +504,177 @@ function makePickable(el, action, meta){
   return el;
 }
 
+function openCSVPicker(){
+  document.getElementById('csvInput').value = '';
+  document.getElementById('csvInput').click();
+}
+
+function handleCSVFile(event){
+  const file = event.target.files && event.target.files[0];
+
+  if(!file){
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    try{
+      const text = e.target.result;
+      const parsed = parseCSVInventory(text);
+
+      if(!parsed.length){
+        updateInfo('<b>Error CSV:</b> no encontré registros válidos.<br>Revisa columnas: NP, LOTE, LOCAL, QTY, BOXES, STATUS.');
+        return;
+      }
+
+      inventoryData = parsed;
+      dataSourceLabel = `Datos cargados desde CSV: ${file.name}`;
+
+      selectedRackId = null;
+      selectedLocalCode = null;
+      lastSearchResults = [];
+
+      buildWarehouse();
+      applyTransforms();
+
+      updateInfo(
+        `<b>CSV cargado correctamente.</b><br>` +
+        `Archivo: <b>${file.name}</b><br>` +
+        `Registros válidos: <b>${inventoryData.length}</b><br>` +
+        `Ya puedes buscar por NP, lote, rack o local.`
+      );
+    }catch(err){
+      updateInfo(`<b>Error al leer CSV:</b><br>${err.message}`);
+    }
+  };
+
+  reader.onerror = function(){
+    updateInfo('<b>Error:</b> no pude leer el archivo CSV.');
+  };
+
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSVInventory(text){
+  const clean = String(text || '').replace(/^\uFEFF/, '');
+  const lines = clean.split(/\r?\n/).filter(line => line.trim() !== '');
+
+  if(lines.length < 2){
+    throw new Error('El CSV no tiene filas suficientes.');
+  }
+
+  const headers = parseCSVLine(lines[0]).map(normalizeHeader);
+
+  const idxNP = findHeaderIndex(headers, ['NP','ITEM','PARTNUMBER','PARTNO','MATERIAL']);
+  const idxLot = findHeaderIndex(headers, ['LOTE','LOT','LOTSERIAL','LOTSERIALNUMBER','LOTNUMBER','SERIAL']);
+  const idxLocal = findHeaderIndex(headers, ['LOCAL','LOCATION','LOCACION','UBICACION','RACKLOCAL','BIN']);
+  const idxQty = findHeaderIndex(headers, ['QTY','QUANTITY','CANTIDAD','PCS']);
+  const idxBoxes = findHeaderIndex(headers, ['BOXES','BOX','CAJAS']);
+  const idxStatus = findHeaderIndex(headers, ['STATUS','ESTADO','LOTSTATUS','ESTATUS']);
+
+  const missing = [];
+  if(idxNP < 0) missing.push('NP');
+  if(idxLot < 0) missing.push('LOTE');
+  if(idxLocal < 0) missing.push('LOCAL');
+
+  if(missing.length){
+    throw new Error('Faltan columnas obligatorias: ' + missing.join(', '));
+  }
+
+  const rows = [];
+
+  for(let i=1; i<lines.length; i++){
+    const cols = parseCSVLine(lines[i]);
+
+    const np = String(cols[idxNP] || '').trim().toUpperCase();
+    const lot = String(cols[idxLot] || '').trim().toUpperCase();
+    const local = normalizeLocal(cols[idxLocal]);
+
+    if(!np || !lot || !local){
+      continue;
+    }
+
+    rows.push({
+      np,
+      lot,
+      local,
+      qty:idxQty >= 0 ? toNumber(cols[idxQty]) : 0,
+      boxes:idxBoxes >= 0 ? toNumber(cols[idxBoxes]) : 0,
+      status:idxStatus >= 0 ? normalizeStatus(cols[idxStatus]) : 'Disponible'
+    });
+  }
+
+  return rows;
+}
+
+function parseCSVLine(line){
+  const result = [];
+  let current = '';
+  let insideQuotes = false;
+
+  for(let i=0; i<line.length; i++){
+    const char = line[i];
+    const next = line[i+1];
+
+    if(char === '"' && insideQuotes && next === '"'){
+      current += '"';
+      i++;
+      continue;
+    }
+
+    if(char === '"'){
+      insideQuotes = !insideQuotes;
+      continue;
+    }
+
+    if(char === ',' && !insideQuotes){
+      result.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  result.push(current.trim());
+  return result;
+}
+
+function findHeaderIndex(headers, options){
+  return headers.findIndex(h => options.includes(h));
+}
+
+function normalizeLocal(value){
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g,'')
+    .replace(/[–—]/g,'-');
+}
+
+function toNumber(value){
+  const n = Number(String(value || '').replace(/,/g,'').trim());
+  return Number.isFinite(n) ? n : 0;
+}
+
+function restoreDemoData(){
+  inventoryData = cloneInventory(DEMO_INVENTORY);
+  dataSourceLabel = 'Datos demo activos';
+  selectedRackId = null;
+  selectedLocalCode = null;
+  lastSearchResults = [];
+
+  buildWarehouse();
+  applyTransforms();
+
+  updateInfo(
+    `<b>Datos demo restaurados.</b><br>` +
+    `Registros demo: <b>${inventoryData.length}</b><br>` +
+    `Prueba: 98A1850, L2401-A, RC07-3-05, 70CR.`
+  );
+}
+
 function buildWarehouse(){
   const w = document.getElementById('warehouse');
   w.innerHTML = '';
@@ -483,7 +701,7 @@ function buildWarehouse(){
   buildRoute(w);
 
   w.appendChild(E('a-text', {
-    value:'MiniWMS AR · Layout Real Operativo',
+    value:'MiniWMS AR · V9.0 CSV',
     position:'-10.4 0.16 -6.85',
     rotation:'-90 0 0',
     color:'#4fc3f7',
@@ -568,7 +786,7 @@ function buildMainAisles(parent){
     {x:-2.4,z:-1.9,w:19.4,d:0.50,color:'#f39c12',op:.25},
     {x:-2.4,z: 2.05,w:19.4,d:0.50,color:'#f39c12',op:.25},
     {x:-10.65,z:0,w:0.38,d:13.0,color:'#4fc3f7',op:.15},
-    {x: 6.35,z:0,w:0.42,d:13.0,color:'#4fc3f7',op:.15},
+    {x:6.35,z:0,w:0.42,d:13.0,color:'#4fc3f7',op:.15},
     {x:-0.95,z:0,w:0.35,d:13.0,color:'#55efc4',op:.12}
   ].forEach(a => {
     parent.appendChild(E('a-box', {
@@ -1092,7 +1310,7 @@ function clearHighlight(showMsg=true){
   lastSearchResults = [];
 
   if(showMsg){
-    updateInfo('<b>Resaltado limpio.</b><br>Busca por NP, lote, rack o local.');
+    updateInfo(`<b>Resaltado limpio.</b><br>${dataSourceLabel}.`);
   }
 }
 
@@ -1136,15 +1354,18 @@ function highlightRack(id, silent=false){
 
   const r = entry.meta;
   const pct = Math.round(r.occ/r.cap*100);
-  const items = INVENTORY.filter(i => i.local.startsWith(r.id + '-'));
-  const typeText = r.depthType === 'DOUBLE' ? '<br><b>Tipo:</b> Rack doble profundidad / especial' : (isSpecialRack(r.id) ? '<br><b>Tipo:</b> Rack especial / lógica prioritaria' : '');
+  const items = getInventoryByRack(r.id);
+  const typeText = r.depthType === 'DOUBLE'
+    ? '<br><b>Tipo:</b> Rack doble profundidad / especial'
+    : (isSpecialRack(r.id) ? '<br><b>Tipo:</b> Rack especial / lógica prioritaria' : '');
 
   if(!silent){
     updateInfo(
       `<b>Rack seleccionado:</b> ${r.id}<br>` +
       `Zona: <b>${r.zone}</b>${typeText}<br>` +
-      `Ocupación: <b>${r.occ}/${r.cap}</b> · <b>${pct}%</b><br>` +
-      `Inventario demo: <b>${items.length}</b> registro(s)`
+      `Ocupación layout: <b>${r.occ}/${r.cap}</b> · <b>${pct}%</b><br>` +
+      `Registros cargados en rack: <b>${items.length}</b><br>` +
+      `<span style="color:#7fb3e0">${dataSourceLabel}</span>`
     );
   }
 }
@@ -1214,13 +1435,14 @@ function highlightLocal(code, silent=false){
         `NP: <b>${inv.np}</b> · Lote: <b>${inv.lot}</b><br>` +
         `Qty: <b>${inv.qty}</b> · Boxes: <b>${inv.boxes}</b><br>` +
         `Estado: <b style="color:${color}">${inv.status}</b><br>` +
-        `Acción: ${getSuggestedAction(inv.status)}`
+        `Acción: ${getSuggestedAction(inv.status)}<br>` +
+        `<span style="color:#7fb3e0">${dataSourceLabel}</span>`
       );
     }else{
       updateInfo(
         `<b>Local seleccionado:</b> ${code}<br>` +
         `Rack: <b>${local.rackId}</b> · Zona: <b>${rack.meta.zone}</b><br>` +
-        `Sin inventario demo asignado.<br>` +
+        `Sin inventario cargado para este local.<br>` +
         `Acción: revisar local en MiniWMS maestro.`
       );
     }
@@ -1245,7 +1467,7 @@ function searchTarget(){
     return;
   }
 
-  const hits = INVENTORY.filter(i =>
+  const hits = inventoryData.filter(i =>
     normalizeSearch(i.np) === q ||
     normalizeSearch(i.lot) === q ||
     normalizeSearch(i.local) === q ||
@@ -1285,13 +1507,14 @@ function searchTarget(){
       `<b>Búsqueda:</b> ${q}<br>` +
       `Resultados: <b>${hits.length}</b><br>` +
       rows +
-      `<br><br>Usa <b>Ruta resultado</b> para guiar visualmente hacia el primer resultado.`
+      `<br><br>Usa <b>Ruta resultado</b> para guiar visualmente hacia el primer resultado.<br>` +
+      `<span style="color:#7fb3e0">${dataSourceLabel}</span>`
     );
 
     return;
   }
 
-  updateInfo(`No encontré: <b>${q}</b><br>Prueba: 98A1850, L2401-A, RC07-3-05.`);
+  updateInfo(`No encontré: <b>${q}</b><br>Revisa CSV o prueba: 98A1850, L2401-A, RC07-3-05.`);
 }
 
 function showResultRoute(){
@@ -1347,7 +1570,7 @@ function toggleSpecialRacks(){
 
   updateInfo(
     specialVisible
-      ? '<b>Racks especiales activos.</b><br>Resaltados: <b>RC05, RC10, RC14, RC16</b>. RC16 se muestra como doble profundidad.'
+      ? '<b>Racks especiales activos.</b><br>RC05, RC10, RC14, RC16. RC16 se muestra como doble profundidad.'
       : '<b>Racks especiales ocultos.</b>'
   );
 }
@@ -1424,7 +1647,7 @@ function resetWarehouse(){
   applyTransforms();
   clearHighlight(false);
 
-  updateInfo('<b>Vista reiniciada.</b>');
+  updateInfo(`<b>Vista reiniciada.</b><br>${dataSourceLabel}.`);
 }
 
 function hideControls(){
@@ -1650,7 +1873,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.9 Layout real operativo activo. RC16 ahora se representa como rack especial de doble profundidad.');
+    updateInfo(`<b>Marcador detectado.</b><br>V9.0 CSV activo.<br><span style="color:#7fb3e0">${dataSourceLabel}</span>`);
   });
 
   marker.addEventListener('markerLost', () => {
