@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.2 Paleta MiniWMS</title>
+<title>MiniWMS AR · V8.3 Selección Mejorada</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -234,7 +234,7 @@ button.red{
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.2</h1>
+  <h1>🏭 MiniWMS AR · V8.3</h1>
   <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y búsqueda</p>
 </div>
 
@@ -307,7 +307,11 @@ button.red{
 
   </a-marker>
 
-  <a-entity camera></a-entity>
+  <a-entity
+    camera
+    cursor="rayOrigin: mouse"
+    raycaster="objects: .pickable">
+  </a-entity>
 </a-scene>
 
 <script>
@@ -601,6 +605,26 @@ function buildRack(parent,rack){
   const fColor = frameColor(ratio);
   const pColor = palletColor(ratio);
 
+  // Hitbox invisible del rack completo.
+  // No cambia el visual; solo facilita tocar el rack.
+  const rackHitBox = E('a-box', {
+    class:'pickable',
+    position:`0 ${height/2} 0`,
+    width:String(width + 0.55),
+    height:String(height + 0.55),
+    depth:String(depth + 0.65),
+    color:'#ffffff',
+    opacity:'0.001',
+    transparent:'true'
+  });
+
+  rackHitBox.addEventListener('click', function(e){
+    e.stopPropagation();
+    highlightRack(rack.id);
+  });
+
+  group.appendChild(rackHitBox);
+
   group.appendChild(E('a-box', {
     position:'0 0.03 0',
     width:String(width + 0.16),
@@ -654,23 +678,31 @@ function buildRack(parent,rack){
       const localCode = `${rack.id}-${lv}-${String(bay).padStart(2,'0')}`;
 
       if(highDetail){
-        group.appendChild(E('a-box', {
+        const localPanel = E('a-box', {
+          class:'pickable',
           position:`${localX} ${cellY} ${frontZ}`,
           width:String((width/rack.bays)-0.035),
           height:'0.17',
-          depth:'0.018',
+          depth:'0.035',
           color:localPanelColor(),
           opacity:isHolo() ? '0.30' : '0.62',
           transparent:'true'
-        }));
+        });
+
+        localPanel.addEventListener('click', function(e){
+          e.stopPropagation();
+          highlightLocal(localCode);
+        });
+
+        group.appendChild(localPanel);
       }
 
       const occ = occupiedLeft > 0;
       if(occ) occupiedLeft--;
 
       if(occ){
-        group.appendChild(E('a-box', {
-          class:'pallet',
+        const palletBox = E('a-box', {
+          class:'pallet pickable',
           position:`${localX} ${cellY - 0.012} ${-0.20}`,
           width:String((width/rack.bays)-0.06),
           height:'0.11',
@@ -678,7 +710,14 @@ function buildRack(parent,rack){
           color:pColor,
           opacity:isHolo() ? '0.48' : '0.82',
           transparent:'true'
-        }));
+        });
+
+        palletBox.addEventListener('click', function(e){
+          e.stopPropagation();
+          highlightLocal(localCode);
+        });
+
+        group.appendChild(palletBox);
       }
 
       cells.push({level:lv,bay:bay,x:localX,y:cellY,z:-0.20,code:localCode});
@@ -686,13 +725,20 @@ function buildRack(parent,rack){
     }
   }
 
-  group.appendChild(E('a-text', {
+  const rackLabel = E('a-text', {
     value:rack.id,
     position:`${-width/2} ${height+0.12} ${-depth/2-0.18}`,
     rotation:'-70 0 0',
     color:'#4fc3f7',
     width:'2.0'
-  }));
+  });
+
+  rackLabel.addEventListener('click', function(e){
+    e.stopPropagation();
+    highlightRack(rack.id);
+  });
+
+  group.appendChild(rackLabel);
 
   group.addEventListener('click', () => highlightRack(rack.id));
 
@@ -992,7 +1038,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.2 Paleta MiniWMS activa.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.3 Selección Mejorada activa.');
   });
 
   marker.addEventListener('markerLost', () => {
