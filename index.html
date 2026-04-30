@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V9.0 CSV</title>
+<title>MiniWMS AR · V9.1 Validación CSV</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -191,9 +191,11 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
   line-height:1.4;
 }
 
-#csvInput{
-  display:none;
-}
+#csvInput{display:none}
+
+.warn{color:#ffe066}
+.err{color:#ff9999}
+.oktext{color:#55efc4}
 
 @media(max-width:420px){
   .mini-grid button{
@@ -207,8 +209,8 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V9.0 CSV</h1>
-  <p>Layout real operativo con carga CSV</p>
+  <h1>🏭 MiniWMS AR · V9.1 CSV</h1>
+  <p>Validación CSV + plantilla operativa</p>
 </div>
 
 <div id="status">Buscando HIRO...</div>
@@ -243,6 +245,9 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 
     <button class="green" onclick="openCSVPicker()">Cargar CSV</button>
     <button class="yellow" onclick="restoreDemoData()">Datos demo</button>
+
+    <button class="primary" onclick="downloadCSVTemplate()">Descargar plantilla CSV</button>
+    <button class="orange" onclick="showCSVSummary()">Resumen CSV</button>
   </div>
 
   <div class="mini-grid">
@@ -263,7 +268,7 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 
   <div id="hint">
     CSV esperado: <b>NP, LOTE, LOCAL, QTY, BOXES, STATUS</b>.<br>
-    Estados válidos: Disponible, Picking, Auditoría, Bloqueado.
+    V9.1 valida locales, duplicados y resumen de carga.
   </div>
 
   <div style="margin-top:8px">
@@ -339,6 +344,7 @@ const DEMO_INVENTORY = [
 
 let inventoryData = cloneInventory(DEMO_INVENTORY);
 let dataSourceLabel = 'Datos demo activos';
+let lastCSVSummary = null;
 
 let rackMap = new Map();
 let localMap = new Map();
@@ -429,6 +435,10 @@ function isHolo(){
 
 function getInventoryByLocal(local){
   return inventoryData.find(i => i.local === local);
+}
+
+function getAllInventoryByLocal(local){
+  return inventoryData.filter(i => i.local === local);
 }
 
 function getInventoryByRack(rackId){
@@ -523,13 +533,14 @@ function handleCSVFile(event){
       const text = e.target.result;
       const parsed = parseCSVInventory(text);
 
-      if(!parsed.length){
+      if(!parsed.rows.length){
         updateInfo('<b>Error CSV:</b> no encontré registros válidos.<br>Revisa columnas: NP, LOTE, LOCAL, QTY, BOXES, STATUS.');
         return;
       }
 
-      inventoryData = parsed;
+      inventoryData = parsed.rows;
       dataSourceLabel = `Datos cargados desde CSV: ${file.name}`;
+      lastCSVSummary = buildCSVSummary(inventoryData, parsed.validation, file.name);
 
       selectedRackId = null;
       selectedLocalCode = null;
@@ -538,12 +549,7 @@ function handleCSVFile(event){
       buildWarehouse();
       applyTransforms();
 
-      updateInfo(
-        `<b>CSV cargado correctamente.</b><br>` +
-        `Archivo: <b>${file.name}</b><br>` +
-        `Registros válidos: <b>${inventoryData.length}</b><br>` +
-        `Ya puedes buscar por NP, lote, rack o local.`
-      );
+      updateInfo(formatCSVSummary(lastCSVSummary, true));
     }catch(err){
       updateInfo(`<b>Error al leer CSV:</b><br>${err.message}`);
     }
@@ -583,6 +589,14 @@ function parseCSVInventory(text){
   }
 
   const rows = [];
+  const validation = {
+    invalidLocals: [],
+    duplicateLocals: [],
+    skippedRows: 0,
+    warnings: []
+  };
+
+  const localCounter = new Map();
 
   for(let i=1; i<lines.length; i++){
     const cols = parseCSVLine(lines[i]);
@@ -592,20 +606,40 @@ function parseCSVInventory(text){
     const local = normalizeLocal(cols[idxLocal]);
 
     if(!np || !lot || !local){
+      validation.skippedRows++;
       continue;
     }
 
-    rows.push({
+    const record = {
       np,
       lot,
       local,
       qty:idxQty >= 0 ? toNumber(cols[idxQty]) : 0,
       boxes:idxBoxes >= 0 ? toNumber(cols[idxBoxes]) : 0,
       status:idxStatus >= 0 ? normalizeStatus(cols[idxStatus]) : 'Disponible'
-    });
+    };
+
+    rows.push(record);
+    localCounter.set(local, (localCounter.get(local) || 0) + 1);
   }
 
-  return rows;
+  const validLocals = getAllLayoutLocals();
+
+  rows.forEach(r => {
+    if(!validLocals.has(r.local)){
+      validation.invalidLocals.push(r.local);
+    }
+  });
+
+  localCounter.forEach((count, local) => {
+    if(count > 1){
+      validation.duplicateLocals.push({local, count});
+    }
+  });
+
+  validation.invalidLocals = [...new Set(validation.invalidLocals)];
+
+  return {rows, validation};
 }
 
 function parseCSVLine(line){
@@ -658,12 +692,163 @@ function toNumber(value){
   return Number.isFinite(n) ? n : 0;
 }
 
+function getAllLayoutLocals(){
+  const set = new Set();
+
+  RACKS.forEach(rack => {
+    for(let lv=1; lv<=rack.levels; lv++){
+      for(let bay=1; bay<=rack.bays; bay++){
+        set.add(`${rack.id}-${lv}-${String(bay).padStart(2,'0')}`);
+      }
+    }
+  });
+
+  return set;
+}
+
+function buildCSVSummary(rows, validation, fileName){
+  const npSet = new Set();
+  const lotSet = new Set();
+  let qtyTotal = 0;
+  let boxesTotal = 0;
+
+  const statusCount = {
+    Disponible: 0,
+    Picking: 0,
+    Auditoría: 0,
+    Bloqueado: 0
+  };
+
+  rows.forEach(r => {
+    npSet.add(r.np);
+    lotSet.add(r.lot);
+    qtyTotal += Number(r.qty || 0);
+    boxesTotal += Number(r.boxes || 0);
+    statusCount[r.status] = (statusCount[r.status] || 0) + 1;
+  });
+
+  return {
+    fileName: fileName || 'Datos demo',
+    rows: rows.length,
+    uniqueNP: npSet.size,
+    uniqueLots: lotSet.size,
+    qtyTotal,
+    boxesTotal,
+    statusCount,
+    invalidLocals: validation.invalidLocals || [],
+    duplicateLocals: validation.duplicateLocals || [],
+    skippedRows: validation.skippedRows || 0,
+    source: dataSourceLabel
+  };
+}
+
+function formatCSVSummary(summary, loadedNow=false){
+  if(!summary){
+    return '<b>Resumen CSV:</b><br>No hay resumen disponible. Carga un CSV o restaura datos demo.';
+  }
+
+  const invalid = summary.invalidLocals.length
+    ? `<br><span class="err"><b>Locales no encontrados:</b> ${summary.invalidLocals.slice(0,8).join(', ')}${summary.invalidLocals.length>8?'...':''}</span>`
+    : '<br><span class="oktext"><b>Locales:</b> todos coinciden con el layout.</span>';
+
+  const dup = summary.duplicateLocals.length
+    ? `<br><span class="warn"><b>Duplicados por local:</b> ${summary.duplicateLocals.slice(0,6).map(d=>`${d.local}(${d.count})`).join(', ')}${summary.duplicateLocals.length>6?'...':''}</span>`
+    : '<br><span class="oktext"><b>Duplicados:</b> no detectados.</span>';
+
+  const skipped = summary.skippedRows
+    ? `<br><span class="warn"><b>Filas omitidas:</b> ${summary.skippedRows}</span>`
+    : '';
+
+  return (
+    `${loadedNow ? '<b>CSV cargado correctamente.</b>' : '<b>Resumen CSV / Datos activos</b>'}<br>` +
+    `Archivo/Fuente: <b>${summary.fileName}</b><br>` +
+    `Registros: <b>${summary.rows}</b> · NP únicos: <b>${summary.uniqueNP}</b> · Lotes únicos: <b>${summary.uniqueLots}</b><br>` +
+    `Qty total: <b>${summary.qtyTotal}</b> · Boxes total: <b>${summary.boxesTotal}</b><br>` +
+    `Disponible: <b style="color:${getStatusColor('Disponible')}">${summary.statusCount.Disponible || 0}</b> · ` +
+    `Picking: <b style="color:${getStatusColor('Picking')}">${summary.statusCount.Picking || 0}</b> · ` +
+    `Auditoría: <b style="color:${getStatusColor('Auditoría')}">${summary.statusCount.Auditoría || 0}</b> · ` +
+    `Bloqueado: <b style="color:${getStatusColor('Bloqueado')}">${summary.statusCount.Bloqueado || 0}</b>` +
+    invalid +
+    dup +
+    skipped
+  );
+}
+
+function showCSVSummary(){
+  if(!lastCSVSummary){
+    lastCSVSummary = buildCSVSummary(inventoryData, {
+      invalidLocals: validateInvalidLocals(inventoryData),
+      duplicateLocals: validateDuplicateLocals(inventoryData),
+      skippedRows: 0
+    }, dataSourceLabel);
+  }
+
+  updateInfo(formatCSVSummary(lastCSVSummary, false));
+}
+
+function validateInvalidLocals(rows){
+  const validLocals = getAllLayoutLocals();
+  const invalid = rows.filter(r => !validLocals.has(r.local)).map(r => r.local);
+  return [...new Set(invalid)];
+}
+
+function validateDuplicateLocals(rows){
+  const counter = new Map();
+
+  rows.forEach(r => {
+    counter.set(r.local, (counter.get(r.local) || 0) + 1);
+  });
+
+  const dup = [];
+  counter.forEach((count, local) => {
+    if(count > 1) dup.push({local, count});
+  });
+
+  return dup;
+}function downloadCSVTemplate(){
+  const csv = [
+    ['NP','LOTE','LOCAL','QTY','BOXES','STATUS'],
+    ['98A1850','L2401-A','RC07-3-05','27000','3','Disponible'],
+    ['100506046','L2503-X','RC10-2-04','12000','4','Disponible'],
+    ['D3301','L2501-D','RC05-3-08','7500','5','Bloqueado'],
+    ['70CR','L2510-R','RC16-2-06','4800','8','Disponible']
+  ].map(row => row.map(csvEscape).join(',')).join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = 'MiniWMS_AR_Template.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+
+  updateInfo('<b>Plantilla CSV generada.</b><br>Descarga: <b>MiniWMS_AR_Template.csv</b><br>Columnas: NP, LOTE, LOCAL, QTY, BOXES, STATUS.');
+}
+
+function csvEscape(value){
+  const s = String(value ?? '');
+  if(/[",\n\r]/.test(s)){
+    return '"' + s.replace(/"/g,'""') + '"';
+  }
+  return s;
+}
+
 function restoreDemoData(){
   inventoryData = cloneInventory(DEMO_INVENTORY);
   dataSourceLabel = 'Datos demo activos';
   selectedRackId = null;
   selectedLocalCode = null;
   lastSearchResults = [];
+
+  lastCSVSummary = buildCSVSummary(inventoryData, {
+    invalidLocals: validateInvalidLocals(inventoryData),
+    duplicateLocals: validateDuplicateLocals(inventoryData),
+    skippedRows: 0
+  }, 'Datos demo');
 
   buildWarehouse();
   applyTransforms();
@@ -701,7 +886,7 @@ function buildWarehouse(){
   buildRoute(w);
 
   w.appendChild(E('a-text', {
-    value:'MiniWMS AR · V9.0 CSV',
+    value:'MiniWMS AR · V9.1 CSV Validado',
     position:'-10.4 0.16 -6.85',
     rotation:'-90 0 0',
     color:'#4fc3f7',
@@ -1390,7 +1575,8 @@ function highlightLocal(code, silent=false){
     box.setAttribute('emissiveIntensity','0.18');
   });
 
-  const inv = getInventoryByLocal(code);
+  const items = getAllInventoryByLocal(code);
+  const inv = items[0];
   const color = inv ? getStatusColor(inv.status) : '#f39c12';
 
   const h = E('a-entity', {id:'localHighlight'});
@@ -1429,14 +1615,19 @@ function highlightLocal(code, silent=false){
 
   if(!silent){
     if(inv){
+      const multiNote = items.length > 1
+        ? `<br><span class="warn">Atención: este local tiene <b>${items.length}</b> registros cargados.</span>`
+        : '';
+
       updateInfo(
         `<b>Local seleccionado:</b> ${code}<br>` +
         `Rack: <b>${local.rackId}</b> · Zona: <b>${rack.meta.zone}</b><br>` +
         `NP: <b>${inv.np}</b> · Lote: <b>${inv.lot}</b><br>` +
         `Qty: <b>${inv.qty}</b> · Boxes: <b>${inv.boxes}</b><br>` +
         `Estado: <b style="color:${color}">${inv.status}</b><br>` +
-        `Acción: ${getSuggestedAction(inv.status)}<br>` +
-        `<span style="color:#7fb3e0">${dataSourceLabel}</span>`
+        `Acción: ${getSuggestedAction(inv.status)}` +
+        multiNote +
+        `<br><span style="color:#7fb3e0">${dataSourceLabel}</span>`
       );
     }else{
       updateInfo(
@@ -1863,6 +2054,12 @@ function bindSafeTouchControls(){
 }
 
 window.addEventListener('load', () => {
+  lastCSVSummary = buildCSVSummary(inventoryData, {
+    invalidLocals: validateInvalidLocals(inventoryData),
+    duplicateLocals: validateDuplicateLocals(inventoryData),
+    skippedRows: 0
+  }, 'Datos demo');
+
   buildWarehouse();
   applyTransforms();
   bindSafeTouchControls();
@@ -1873,7 +2070,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo(`<b>Marcador detectado.</b><br>V9.0 CSV activo.<br><span style="color:#7fb3e0">${dataSourceLabel}</span>`);
+    updateInfo(`<b>Marcador detectado.</b><br>V9.1 CSV validado activo.<br><span style="color:#7fb3e0">${dataSourceLabel}</span>`);
   });
 
   marker.addEventListener('markerLost', () => {
