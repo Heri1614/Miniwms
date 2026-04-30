@@ -3,17 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.4.2 Cámara AR Nativa</title>
+<title>MiniWMS AR · V8.5 Selección Táctil Segura</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
 
 <style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
+*{box-sizing:border-box;margin:0;padding:0}
 
 body{
   overflow:hidden;
@@ -22,7 +18,6 @@ body{
   color:#e0eaff;
 }
 
-/* Barra superior compacta */
 #topbar{
   position:fixed;
   top:0;
@@ -45,9 +40,7 @@ body{
   line-height:1.1;
 }
 
-#topbar p{
-  display:none;
-}
+#topbar p{display:none}
 
 #status{
   position:fixed;
@@ -91,9 +84,7 @@ body{
   touch-action:auto;
 }
 
-#controls.hidden{
-  display:none;
-}
+#controls.hidden{display:none}
 
 #showControls{
   position:fixed;
@@ -113,9 +104,7 @@ body{
   touch-action:auto;
 }
 
-#showControls.show{
-  display:block;
-}
+#showControls.show{display:block}
 
 .grid{
   display:grid;
@@ -142,34 +131,12 @@ button{
   font-weight:700;
 }
 
-button:active{
-  transform:scale(.98);
-}
-
-button.primary{
-  border-color:#4fc3f7;
-  color:#4fc3f7;
-}
-
-button.green{
-  border-color:#27ae60;
-  color:#55efc4;
-}
-
-button.orange{
-  border-color:#e67e22;
-  color:#f39c12;
-}
-
-button.purple{
-  border-color:#9b59b6;
-  color:#d7b4ea;
-}
-
-button.red{
-  border-color:#e74c3c;
-  color:#ff9999;
-}
+button:active{transform:scale(.98)}
+button.primary{border-color:#4fc3f7;color:#4fc3f7}
+button.green{border-color:#27ae60;color:#55efc4}
+button.orange{border-color:#e67e22;color:#f39c12}
+button.purple{border-color:#9b59b6;color:#d7b4ea}
+button.red{border-color:#e74c3c;color:#ff9999}
 
 .searchRow{
   display:flex;
@@ -195,9 +162,7 @@ button.red{
   text-transform:uppercase;
 }
 
-.searchRow input:focus{
-  border-color:#4fc3f7;
-}
+.searchRow input:focus{border-color:#4fc3f7}
 
 .searchRow button{
   flex:0 0 88px;
@@ -216,9 +181,7 @@ button.red{
   line-height:1.45;
 }
 
-#info b{
-  color:#4fc3f7;
-}
+#info b{color:#4fc3f7}
 
 #hint{
   margin-top:6px;
@@ -239,8 +202,8 @@ button.red{
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.4.2</h1>
-  <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y búsqueda</p>
+  <h1>🏭 MiniWMS AR · V8.5</h1>
+  <p>Vista AR tipo maqueta operativa</p>
 </div>
 
 <div id="status">Buscando HIRO...</div>
@@ -284,7 +247,7 @@ button.red{
 
   <div id="hint">
     Prueba: <b>RC07</b>, <b>RC07-3-05</b>, <b>98A1850</b>, <b>100506046</b>.<br>
-    Con controles ocultos: 1 dedo gira. 2 dedos acercan o mueven.
+    Con controles ocultos: 1 dedo gira. 2 dedos acercan o mueven. Toque corto intenta seleccionar.
   </div>
 
   <div style="margin-top:8px">
@@ -295,6 +258,7 @@ button.red{
 <button id="showControls" onclick="showControls()">▲ Controles</button>
 
 <a-scene
+  id="scene"
   embedded
   vr-mode-ui="enabled:false"
   renderer="logarithmicDepthBuffer:true; antialias:true; alpha:true;"
@@ -313,11 +277,7 @@ button.red{
 
   </a-marker>
 
-  <a-entity
-    camera
-    cursor="rayOrigin: mouse"
-    raycaster="objects: .pickable">
-  </a-entity>
+  <a-entity id="cameraRig" camera></a-entity>
 </a-scene>
 
 <script>
@@ -343,6 +303,7 @@ const RACKS = [
 
 let rackMap = new Map();
 let localMap = new Map();
+let pickableEls = [];
 
 let routeVisible = false;
 let heatmap = false;
@@ -357,6 +318,7 @@ let offsetZ = 0;
 
 let touchState = null;
 let suppressNextClick = false;
+let raycaster = null;
 
 function E(tag, attrs = {}){
   const el = document.createElement(tag);
@@ -394,19 +356,25 @@ function localPanelColor(){
   return isHolo() ? '#4fc3f7' : '#0e1e38';
 }
 
-function makePickable(el, action){
+function makePickable(el, action, meta){
   el.setAttribute('class', (el.getAttribute('class') || '') + ' pickable');
+
+  el.addEventListener('loaded', function(){
+    el.object3D.userData.pickAction = action;
+    el.object3D.userData.pickMeta = meta || {};
+  });
+
   el.addEventListener('click', function(e){
     if(suppressNextClick){
       e.stopPropagation();
       e.preventDefault();
       return;
     }
-
     e.stopPropagation();
     action();
   });
 
+  pickableEls.push(el);
   return el;
 }
 
@@ -415,6 +383,7 @@ function buildWarehouse(){
   w.innerHTML = '';
   rackMap.clear();
   localMap.clear();
+  pickableEls = [];
 
   buildFloor(w);
   buildGrid(w);
@@ -656,7 +625,7 @@ function buildRack(parent,rack){
 
       makePickable(post, function(){
         highlightRack(rack.id);
-      });
+      }, {type:'rack', rackId:rack.id});
 
       group.appendChild(post);
     });
@@ -678,7 +647,7 @@ function buildRack(parent,rack){
 
       makePickable(beam, function(){
         highlightRack(rack.id);
-      });
+      }, {type:'rack', rackId:rack.id});
 
       group.appendChild(beam);
     });
@@ -707,7 +676,7 @@ function buildRack(parent,rack){
 
         makePickable(localPanel, function(){
           highlightLocal(localCode);
-        });
+        }, {type:'local', rackId:rack.id, localCode});
 
         group.appendChild(localPanel);
       }
@@ -729,7 +698,7 @@ function buildRack(parent,rack){
 
         makePickable(palletBox, function(){
           highlightLocal(localCode);
-        });
+        }, {type:'local', rackId:rack.id, localCode});
 
         group.appendChild(palletBox);
       }
@@ -803,7 +772,7 @@ function clearHighlight(showMsg=true){
     box.removeAttribute('emissiveIntensity');
   });
 
-  let localHighlight = document.getElementById('localHighlight');
+  const localHighlight = document.getElementById('localHighlight');
   if(localHighlight){
     localHighlight.parentNode.removeChild(localHighlight);
   }
@@ -956,7 +925,6 @@ function toggleHeatmap(){
   heatmap = !heatmap;
   buildWarehouse();
   applyTransforms();
-
   updateInfo(heatmap ? '<b>Ocupación activa.</b><br>Verde bajo, naranja medio, rojo crítico.' : '<b>Ocupación desactivada.</b>');
 }
 
@@ -964,7 +932,6 @@ function toggleStyleMode(){
   styleMode = isHolo() ? 'realista' : 'holograma';
   buildWarehouse();
   applyTransforms();
-
   updateInfo(isHolo() ? '<b>Modo holograma activo.</b><br>Más brillo, transparencia y estilo AR.' : '<b>Modo realista activo.</b><br>Más sólido y operativo.');
 }
 
@@ -972,7 +939,6 @@ function toggleDetail(){
   highDetail = !highDetail;
   buildWarehouse();
   applyTransforms();
-
   updateInfo(highDetail ? '<b>Detalle alto activo.</b><br>Más elementos visuales.' : '<b>Detalle bajo activo.</b><br>Mejor rendimiento en celular.');
 }
 
@@ -1026,7 +992,7 @@ function resetWarehouse(){
 function hideControls(){
   document.getElementById('controls').classList.add('hidden');
   document.getElementById('showControls').classList.add('show');
-  updateInfo('<b>Controles ocultos.</b><br>1 dedo gira. 2 dedos acercan o mueven.');
+  updateInfo('<b>Controles ocultos.</b><br>1 dedo gira. 2 dedos acercan o mueven. Toque corto selecciona.');
 }
 
 function showControls(){
@@ -1047,8 +1013,117 @@ function getTouchMidpoint(t1,t2){
   };
 }
 
+function getCanvasPoint(clientX, clientY){
+  const scene = document.getElementById('scene');
+  const canvas = scene.canvas;
+  const rect = canvas.getBoundingClientRect();
+
+  return {
+    x:((clientX - rect.left) / rect.width) * 2 - 1,
+    y:-((clientY - rect.top) / rect.height) * 2 + 1
+  };
+}
+
+function getPickActionFromObject(obj){
+  let current = obj;
+
+  while(current){
+    if(current.userData && current.userData.pickAction){
+      return current.userData.pickAction;
+    }
+    current = current.parent;
+  }
+
+  return null;
+}
+
+function pickByRay(clientX, clientY){
+  const scene = document.getElementById('scene');
+
+  if(!scene || !scene.camera || !scene.canvas){
+    return false;
+  }
+
+  if(!raycaster){
+    raycaster = new THREE.Raycaster();
+  }
+
+  const ndc = getCanvasPoint(clientX, clientY);
+  raycaster.setFromCamera(ndc, scene.camera);
+
+  const objects = pickableEls
+    .filter(el => el && el.object3D)
+    .map(el => el.object3D);
+
+  const hits = raycaster.intersectObjects(objects, true);
+
+  for(let i=0; i<hits.length; i++){
+    const action = getPickActionFromObject(hits[i].object);
+    if(action){
+      action();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function pickNearestRack(clientX, clientY){
+  const scene = document.getElementById('scene');
+
+  if(!scene || !scene.camera || !scene.canvas){
+    return false;
+  }
+
+  const canvas = scene.canvas;
+  const rect = canvas.getBoundingClientRect();
+  let bestRack = null;
+  let bestDist = Infinity;
+
+  rackMap.forEach((entry, id) => {
+    if(!entry.group || !entry.group.object3D) return;
+
+    const pos = new THREE.Vector3();
+    entry.group.object3D.getWorldPosition(pos);
+    pos.project(scene.camera);
+
+    const sx = rect.left + (pos.x + 1) * rect.width / 2;
+    const sy = rect.top + (-pos.y + 1) * rect.height / 2;
+
+    const dx = sx - clientX;
+    const dy = sy - clientY;
+    const d = Math.sqrt(dx*dx + dy*dy);
+
+    if(d < bestDist){
+      bestDist = d;
+      bestRack = id;
+    }
+  });
+
+  if(bestRack && bestDist < 135){
+    highlightRack(bestRack);
+    return true;
+  }
+
+  return false;
+}
+
+function selectFromTap(clientX, clientY){
+  const byRay = pickByRay(clientX, clientY);
+
+  if(byRay){
+    return;
+  }
+
+  const byNearest = pickNearestRack(clientX, clientY);
+
+  if(!byNearest){
+    updateInfo('<b>Selección:</b> no detecté rack en ese toque.<br>Acércate un poco más o usa búsqueda por RC/NP.');
+  }
+}
+
 function bindSafeTouchControls(){
-  const scene = document.querySelector('a-scene');
+  const scene = document.getElementById('scene');
 
   function attach(){
     const canvas = scene.canvas;
@@ -1127,10 +1202,17 @@ function bindSafeTouchControls(){
       }
     }, {passive:false});
 
-    canvas.addEventListener('touchend', function(){
+    canvas.addEventListener('touchend', function(e){
+      if(touchState && touchState.mode === 'rotate' && !touchState.moved){
+        const t = e.changedTouches && e.changedTouches[0];
+
+        if(t){
+          selectFromTap(t.clientX, t.clientY);
+        }
+      }
+
       if(touchState && touchState.moved){
         suppressNextClick = true;
-
         setTimeout(function(){
           suppressNextClick = false;
         },250);
@@ -1158,7 +1240,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.4.2 Cámara AR nativa + control táctil activo.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.5 Selección táctil segura activa.');
   });
 
   marker.addEventListener('markerLost', () => {
