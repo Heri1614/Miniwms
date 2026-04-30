@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.8 Búsqueda Operativa</title>
+<title>MiniWMS AR · V8.9 Layout Real Operativo</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -203,8 +203,8 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.8</h1>
-  <p>Búsqueda operativa NP / Lote</p>
+  <h1>🏭 MiniWMS AR · V8.9</h1>
+  <p>Layout real operativo</p>
 </div>
 
 <div id="status">Buscando HIRO...</div>
@@ -249,12 +249,12 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
   </div>
 
   <div id="info">
-    <b>Estado:</b> esperando marcador. Al detectarlo, se mostrará el layout operativo.
+    <b>Estado:</b> esperando marcador. Al detectarlo, se mostrará el layout real operativo.
   </div>
 
   <div id="hint">
-    Prueba: <b>98A1850</b>, <b>L2401-A</b>, <b>RC07-3-05</b>, <b>100506046</b>.<br>
-    Estados: verde disponible, naranja picking, morado auditoría, rojo bloqueado.
+    Prueba: <b>98A1850</b>, <b>L2401-A</b>, <b>RC07-3-05</b>, <b>70CR</b>.<br>
+    V8.9 reorganiza el layout por flujo operativo real.
   </div>
 
   <div style="margin-top:8px">
@@ -291,23 +291,30 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 const SPECIAL_RACKS = ['RC05','RC10','RC14','RC16'];
 
 const RACKS = [
-  {id:'RC01', x:-8.6, z:-4.8, levels:4, bays:8, occ:22, cap:32, zone:'SURTIDO'},
-  {id:'RC02', x:-5.2, z:-4.8, levels:4, bays:8, occ:26, cap:32, zone:'SURTIDO'},
-  {id:'RC03', x:-1.8, z:-4.8, levels:4, bays:8, occ:14, cap:32, zone:'SURTIDO'},
-  {id:'RC04', x: 1.6, z:-4.8, levels:4, bays:8, occ:28, cap:32, zone:'PACKING'},
-  {id:'RC05', x: 5.0, z:-4.8, levels:4, bays:8, occ:31, cap:32, zone:'ESPECIAL'},
+  /* Bloque de surtido / almacenaje principal */
+  {id:'RC01', x:-8.9, z:-3.8, levels:4, bays:8, occ:22, cap:32, zone:'SURTIDO', depthType:'STD'},
+  {id:'RC02', x:-6.2, z:-3.8, levels:4, bays:8, occ:26, cap:32, zone:'SURTIDO', depthType:'STD'},
+  {id:'RC03', x:-3.5, z:-3.8, levels:4, bays:8, occ:14, cap:32, zone:'SURTIDO', depthType:'STD'},
 
-  {id:'RC06', x:-8.6, z: 0.0, levels:5, bays:8, occ:35, cap:40, zone:'AUDITORIA'},
-  {id:'RC07', x:-5.2, z: 0.0, levels:5, bays:8, occ:37, cap:40, zone:'AUDITORIA'},
-  {id:'RC08', x:-1.8, z: 0.0, levels:5, bays:8, occ:16, cap:40, zone:'CENTRAL'},
-  {id:'RC09', x: 1.6, z: 0.0, levels:5, bays:8, occ:39, cap:40, zone:'PACKING'},
-  {id:'RC10', x: 5.0, z: 0.0, levels:5, bays:8, occ:32, cap:40, zone:'ESPECIAL'},
+  /* Bloque central de auditoría / staging */
+  {id:'RC06', x:-8.9, z: 0.0, levels:5, bays:8, occ:35, cap:40, zone:'AUDITORIA', depthType:'STD'},
+  {id:'RC07', x:-6.2, z: 0.0, levels:5, bays:8, occ:37, cap:40, zone:'AUDITORIA', depthType:'STD'},
+  {id:'RC08', x:-3.5, z: 0.0, levels:5, bays:8, occ:16, cap:40, zone:'CENTRAL', depthType:'STD'},
 
-  {id:'RC11', x:-8.6, z: 4.8, levels:4, bays:8, occ:12, cap:32, zone:'RECIBO'},
-  {id:'RC12', x:-5.2, z: 4.8, levels:4, bays:8, occ:29, cap:32, zone:'RECIBO'},
-  {id:'RC13', x:-1.8, z: 4.8, levels:4, bays:8, occ:18, cap:32, zone:'RECIBO'},
-  {id:'RC14', x: 1.6, z: 4.8, levels:4, bays:8, occ:30, cap:32, zone:'ESPECIAL'},
-  {id:'RC16', x: 5.0, z: 4.8, levels:5, bays:8, occ:38, cap:40, zone:'ESPECIAL'}
+  /* Bloque packing / especial */
+  {id:'RC04', x: 0.2, z:-3.8, levels:4, bays:8, occ:28, cap:32, zone:'PACKING', depthType:'STD'},
+  {id:'RC05', x: 2.9, z:-3.8, levels:4, bays:8, occ:31, cap:32, zone:'ESPECIAL', depthType:'SPECIAL'},
+  {id:'RC09', x: 0.2, z: 0.0, levels:5, bays:8, occ:39, cap:40, zone:'PACKING', depthType:'STD'},
+  {id:'RC10', x: 2.9, z: 0.0, levels:5, bays:8, occ:32, cap:40, zone:'ESPECIAL', depthType:'SPECIAL'},
+
+  /* Recibo / reserva */
+  {id:'RC11', x:-8.9, z: 4.3, levels:4, bays:8, occ:12, cap:32, zone:'RECIBO', depthType:'STD'},
+  {id:'RC12', x:-6.2, z: 4.3, levels:4, bays:8, occ:29, cap:32, zone:'RECIBO', depthType:'STD'},
+  {id:'RC13', x:-3.5, z: 4.3, levels:4, bays:8, occ:18, cap:32, zone:'RECIBO', depthType:'STD'},
+
+  /* Especial / embarque */
+  {id:'RC14', x: 0.2, z: 4.3, levels:4, bays:8, occ:30, cap:32, zone:'ESPECIAL', depthType:'SPECIAL'},
+  {id:'RC16', x: 3.1, z: 4.3, levels:5, bays:8, occ:38, cap:48, zone:'ESPECIAL', depthType:'DOUBLE'}
 ];
 
 const INVENTORY = [
@@ -460,11 +467,14 @@ function buildWarehouse(){
   buildFloor(w);
   buildGrid(w);
   buildPerimeter(w);
-  buildAisles(w);
-  buildSafetyLines(w);
-  buildZones(w);
-  buildDocks(w);
-  buildPackingTables(w);
+  buildMainAisles(w);
+  buildFlowLanes(w);
+  buildZoneBlocks(w);
+  buildDockDoors(w);
+  buildReceivingArea(w);
+  buildAuditArea(w);
+  buildPackingArea(w);
+  buildStagingArea(w);
   buildColumns(w);
   buildForkliftPath(w);
 
@@ -473,11 +483,11 @@ function buildWarehouse(){
   buildRoute(w);
 
   w.appendChild(E('a-text', {
-    value:'MiniWMS Operativo · NP / Lote / Local',
-    position:'-10.2 0.16 -6.75',
+    value:'MiniWMS AR · Layout Real Operativo',
+    position:'-10.4 0.16 -6.85',
     rotation:'-90 0 0',
     color:'#4fc3f7',
-    width:'6.2'
+    width:'6.4'
   }));
 
   restoreSelection();
@@ -485,20 +495,20 @@ function buildWarehouse(){
 
 function buildFloor(parent){
   parent.appendChild(E('a-box', {
-    position:'-1.8 0 0',
-    width:'19.2',
+    position:'-2.2 0 0',
+    width:'20.2',
     height:'0.08',
-    depth:'14.2',
+    depth:'14.6',
     color:'#050a16',
-    opacity:'0.70',
+    opacity:'0.68',
     transparent:'true'
   }));
 
   parent.appendChild(E('a-box', {
-    position:'-1.8 0.045 0',
-    width:'19.35',
+    position:'-2.2 0.045 0',
+    width:'20.35',
     height:'0.012',
-    depth:'14.35',
+    depth:'14.75',
     color:'#4fc3f7',
     opacity:'0.10',
     transparent:'true'
@@ -509,26 +519,26 @@ function buildGrid(parent){
   const gridGroup = E('a-entity', {id:'gridGroup'});
   parent.appendChild(gridGroup);
 
-  for(let x=-11; x<=8; x+=1){
+  for(let x=-12; x<=8; x+=1){
     gridGroup.appendChild(E('a-box', {
       position:`${x} 0.046 0`,
-      width:'0.012',
+      width:'0.010',
       height:'0.010',
-      depth:'13.5',
+      depth:'13.8',
       color:'#1b3660',
-      opacity:'0.18',
+      opacity:'0.14',
       transparent:'true'
     }));
   }
 
   for(let z=-7; z<=7; z+=1){
     gridGroup.appendChild(E('a-box', {
-      position:`-1.8 0.047 ${z}`,
-      width:'18.8',
+      position:`-2.2 0.047 ${z}`,
+      width:'19.8',
       height:'0.010',
-      depth:'0.012',
+      depth:'0.010',
       color:'#1b3660',
-      opacity:'0.18',
+      opacity:'0.14',
       transparent:'true'
     }));
   }
@@ -536,10 +546,10 @@ function buildGrid(parent){
 
 function buildPerimeter(parent){
   [
-    {x:-1.8,z:-7.05,w:19.1,d:0.07},
-    {x:-1.8,z: 7.05,w:19.1,d:0.07},
-    {x:-11.35,z:0,w:0.07,d:14.1},
-    {x: 7.75,z:0,w:0.07,d:14.1}
+    {x:-2.2,z:-7.15,w:20.2,d:0.07},
+    {x:-2.2,z: 7.15,w:20.2,d:0.07},
+    {x:-12.3,z:0,w:0.07,d:14.3},
+    {x: 7.9,z:0,w:0.07,d:14.3}
   ].forEach(b => {
     parent.appendChild(E('a-box', {
       position:`${b.x} 0.075 ${b.z}`,
@@ -553,36 +563,40 @@ function buildPerimeter(parent){
   });
 }
 
-function buildAisles(parent){
-  [-2.35, 2.35].forEach(z => {
+function buildMainAisles(parent){
+  [
+    {x:-2.4,z:-1.9,w:19.4,d:0.50,color:'#f39c12',op:.25},
+    {x:-2.4,z: 2.05,w:19.4,d:0.50,color:'#f39c12',op:.25},
+    {x:-10.65,z:0,w:0.38,d:13.0,color:'#4fc3f7',op:.15},
+    {x: 6.35,z:0,w:0.42,d:13.0,color:'#4fc3f7',op:.15},
+    {x:-0.95,z:0,w:0.35,d:13.0,color:'#55efc4',op:.12}
+  ].forEach(a => {
     parent.appendChild(E('a-box', {
-      position:`-1.8 0.073 ${z}`,
-      width:'18.5',
+      position:`${a.x} 0.073 ${a.z}`,
+      width:a.w,
       height:'0.035',
-      depth:'0.44',
-      color:'#f39c12',
-      opacity:'0.25',
-      transparent:'true'
-    }));
-  });
-
-  [-10.25, 7.05].forEach(x => {
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.074 0`,
-      width:'0.36',
-      height:'0.035',
-      depth:'13.25',
-      color:'#4fc3f7',
-      opacity:'0.16',
+      depth:a.d,
+      color:a.color,
+      opacity:String(a.op),
       transparent:'true'
     }));
   });
 }
 
-function buildSafetyLines(parent){
-  for(let x=-10.5; x<=7.2; x+=1.2){
+function buildFlowLanes(parent){
+  for(let x=-11.0; x<=7.0; x+=1.2){
     parent.appendChild(E('a-box', {
-      position:`${x} 0.095 -6.05`,
+      position:`${x} 0.096 -6.20`,
+      width:'0.55',
+      height:'0.022',
+      depth:'0.055',
+      color:'#f1c40f',
+      opacity:'0.55',
+      transparent:'true'
+    }));
+
+    parent.appendChild(E('a-box', {
+      position:`${x} 0.096 6.15`,
       width:'0.55',
       height:'0.022',
       depth:'0.055',
@@ -592,25 +606,26 @@ function buildSafetyLines(parent){
     }));
   }
 
-  for(let x=-10.5; x<=7.2; x+=1.2){
+  for(let z=-5.6; z<=5.6; z+=1.2){
     parent.appendChild(E('a-box', {
-      position:`${x} 0.095 6.05`,
-      width:'0.55',
+      position:`6.35 0.098 ${z}`,
+      width:'0.055',
       height:'0.022',
-      depth:'0.055',
+      depth:'0.55',
       color:'#f1c40f',
-      opacity:'0.55',
+      opacity:'0.42',
       transparent:'true'
     }));
   }
 }
 
-function buildZones(parent){
-  addZone(parent,'RECIBO',-8.8,6.32,3.2,0.9,'#55efc4');
-  addZone(parent,'SURTIDO',-8.8,-6.32,3.6,0.9,'#f39c12');
-  addZone(parent,'AUDITORIA',-2.8,6.32,3.7,0.9,'#9b59b6');
-  addZone(parent,'PACKING',2.6,-6.32,3.6,0.9,'#4fc3f7');
-  addZone(parent,'EMBARQUE',5.8,6.32,3.2,0.9,'#3498db');
+function buildZoneBlocks(parent){
+  addZone(parent,'RECIBO',-9.5,6.45,3.7,0.82,'#55efc4');
+  addZone(parent,'AUDITORIA',-4.8,6.45,3.6,0.82,'#9b59b6');
+  addZone(parent,'SURTIDO',-7.3,-6.45,4.5,0.82,'#f39c12');
+  addZone(parent,'PACKING',1.4,-6.45,4.2,0.82,'#4fc3f7');
+  addZone(parent,'EMBARQUE',4.9,6.45,4.3,0.82,'#3498db');
+  addZone(parent,'STAGING',0.5,6.45,3.2,0.82,'#f1c40f');
 }
 
 function addZone(parent,label,x,z,w,d,color){
@@ -629,65 +644,95 @@ function addZone(parent,label,x,z,w,d,color){
     position:`${x - w/2 + 0.16} 0.17 ${z}`,
     rotation:'-90 0 0',
     color:'#e0eaff',
-    width:'3.6'
+    width:'3.8'
   }));
 }
 
-function buildDocks(parent){
+function buildDockDoors(parent){
   for(let i=0;i<5;i++){
-    const x = 2.15 + i*1.05;
+    const x = 2.45 + i*0.95;
 
     parent.appendChild(E('a-box', {
-      position:`${x} 0.18 6.88`,
-      width:'0.78',
-      height:'0.28',
-      depth:'0.24',
+      position:`${x} 0.16 6.86`,
+      width:'0.68',
+      height:'0.24',
+      depth:'0.22',
       color:'#596b80',
       opacity:'0.86',
       transparent:'true'
     }));
 
     parent.appendChild(E('a-box', {
-      position:`${x} 0.42 7.02`,
-      width:'0.72',
-      height:'0.34',
+      position:`${x} 0.40 7.02`,
+      width:'0.62',
+      height:'0.32',
       depth:'0.12',
       color:'#4fc3f7',
-      opacity:'0.36',
+      opacity:'0.34',
       transparent:'true'
     }));
 
+    parent.appendChild(E('a-text', {
+      value:`D${i+1}`,
+      position:`${x-0.15} 0.62 6.72`,
+      rotation:'-90 0 0',
+      color:'#e0eaff',
+      width:'1.0'
+    }));
+  }
+}
+
+function buildReceivingArea(parent){
+  for(let i=0;i<4;i++){
+    const x = -10.3 + i*0.92;
+
     parent.appendChild(E('a-box', {
-      position:`${x} 0.072 6.58`,
-      width:'0.82',
-      height:'0.05',
-      depth:'0.12',
-      color:'#f39c12',
-      opacity:'0.72',
+      position:`${x} 0.115 5.70`,
+      width:'0.70',
+      height:'0.09',
+      depth:'0.42',
+      color:'#55efc4',
+      opacity:'0.36',
       transparent:'true'
     }));
   }
 }
 
-function buildPackingTables(parent){
-  for(let i=0;i<4;i++){
-    const x = 1.0 + i*0.95;
+function buildAuditArea(parent){
+  for(let i=0;i<3;i++){
+    const x = -5.1 + i*0.85;
 
     parent.appendChild(E('a-box', {
-      position:`${x} 0.16 -5.85`,
-      width:'0.70',
+      position:`${x} 0.12 5.66`,
+      width:'0.62',
       height:'0.10',
-      depth:'0.38',
+      depth:'0.40',
+      color:'#9b59b6',
+      opacity:'0.42',
+      transparent:'true'
+    }));
+  }
+}
+
+function buildPackingArea(parent){
+  for(let i=0;i<4;i++){
+    const x = 0.1 + i*0.85;
+
+    parent.appendChild(E('a-box', {
+      position:`${x} 0.15 -5.85`,
+      width:'0.68',
+      height:'0.10',
+      depth:'0.42',
       color:'#4fc3f7',
       opacity:'0.45',
       transparent:'true'
     }));
 
     parent.appendChild(E('a-box', {
-      position:`${x} 0.08 -5.85`,
-      width:'0.62',
-      height:'0.12',
-      depth:'0.30',
+      position:`${x} 0.075 -5.85`,
+      width:'0.58',
+      height:'0.10',
+      depth:'0.32',
       color:'#5f7284',
       opacity:'0.70',
       transparent:'true'
@@ -695,11 +740,27 @@ function buildPackingTables(parent){
   }
 }
 
+function buildStagingArea(parent){
+  for(let i=0;i<5;i++){
+    const x = -0.8 + i*0.65;
+
+    parent.appendChild(E('a-box', {
+      position:`${x} 0.095 5.68`,
+      width:'0.42',
+      height:'0.06',
+      depth:'0.42',
+      color:'#f1c40f',
+      opacity:'0.35',
+      transparent:'true'
+    }));
+  }
+}
+
 function buildColumns(parent){
   const cols = [
-    [-9.4,-5.05],[-5.9,-5.05],[-2.4,-5.05],[1.1,-5.05],[4.6,-5.05],
-    [-9.4, 0.00],[-5.9, 0.00],[-2.4, 0.00],[1.1, 0.00],[4.6, 0.00],
-    [-9.4, 5.05],[-5.9, 5.05],[-2.4, 5.05],[1.1, 5.05],[4.6, 5.05]
+    [-10.0,-5.0],[-7.1,-5.0],[-4.3,-5.0],[-1.0,-5.0],[2.0,-5.0],[5.0,-5.0],
+    [-10.0, 0.0],[-7.1, 0.0],[-4.3, 0.0],[-1.0, 0.0],[2.0, 0.0],[5.0, 0.0],
+    [-10.0, 5.0],[-7.1, 5.0],[-4.3, 5.0],[-1.0, 5.0],[2.0, 5.0],[5.0, 5.0]
   ];
 
   cols.forEach(([x,z]) => {
@@ -708,7 +769,7 @@ function buildColumns(parent){
       radius:'0.08',
       height:'1.08',
       color:'#5f7284',
-      opacity:'0.72',
+      opacity:'0.70',
       transparent:'true'
     }));
   });
@@ -719,12 +780,14 @@ function buildForkliftPath(parent){
   parent.appendChild(path);
 
   [
-    {x:-10.25,z:-4.8,d:3.0},
-    {x:-10.25,z:0,d:3.0},
-    {x:-10.25,z:4.8,d:3.0},
-    {x:7.05,z:-4.8,d:3.0},
-    {x:7.05,z:0,d:3.0},
-    {x:7.05,z:4.8,d:3.0}
+    {x:-10.65,z:-3.8,d:2.4},
+    {x:-10.65,z:0,d:2.4},
+    {x:-10.65,z:4.3,d:2.4},
+    {x:6.35,z:-3.8,d:2.4},
+    {x:6.35,z:0,d:2.4},
+    {x:6.35,z:4.3,d:2.4},
+    {x:-0.95,z:-1.9,d:3.8},
+    {x:-0.95,z:2.05,d:3.8}
   ].forEach(p => {
     path.appendChild(E('a-box', {
       position:`${p.x} 0.105 ${p.z}`,
@@ -732,7 +795,7 @@ function buildForkliftPath(parent){
       height:'0.022',
       depth:String(p.d),
       color:'#55efc4',
-      opacity:'0.18',
+      opacity:'0.17',
       transparent:'true'
     }));
   });
@@ -747,7 +810,8 @@ function buildRack(parent,rack){
 
   const ratio = rack.occ / rack.cap;
   const width = rack.bays * 0.265;
-  const depth = 0.82;
+  const baseDepth = rack.depthType === 'DOUBLE' ? 1.12 : 0.82;
+  const depth = baseDepth;
   const levelGap = 0.285;
   const height = rack.levels * levelGap + 0.08;
   const fColor = frameColor(ratio, rack.id);
@@ -762,6 +826,18 @@ function buildRack(parent,rack){
     opacity:'0.18',
     transparent:'true'
   }));
+
+  if(rack.depthType === 'DOUBLE'){
+    group.appendChild(E('a-box', {
+      position:'0 0.065 0',
+      width:String(width + 0.22),
+      height:'0.035',
+      depth:String(depth + 0.28),
+      color:'#f1c40f',
+      opacity:'0.18',
+      transparent:'true'
+    }));
+  }
 
   if(specialVisible && special){
     group.appendChild(E('a-ring', {
@@ -793,6 +869,18 @@ function buildRack(parent,rack){
       makePickable(post, function(){ highlightRack(rack.id); }, {type:'rack', rackId:rack.id});
       group.appendChild(post);
     });
+
+    if(rack.depthType === 'DOUBLE'){
+      group.appendChild(E('a-box', {
+        position:`${x} ${height/2} 0`,
+        width:'0.022',
+        height:String(height * 0.92),
+        depth:'0.022',
+        color:'#f1c40f',
+        opacity:'0.55',
+        transparent:'true'
+      }));
+    }
   }
 
   for(let lv=0;lv<=rack.levels;lv++){
@@ -812,6 +900,18 @@ function buildRack(parent,rack){
       makePickable(beam, function(){ highlightRack(rack.id); }, {type:'rack', rackId:rack.id});
       group.appendChild(beam);
     });
+
+    if(rack.depthType === 'DOUBLE'){
+      group.appendChild(E('a-box', {
+        position:`0 ${y} 0`,
+        width:String(width + 0.05),
+        height:'0.020',
+        depth:'0.030',
+        color:'#f1c40f',
+        opacity:'0.45',
+        transparent:'true'
+      }));
+    }
   }
 
   let occupiedLeft = rack.occ;
@@ -844,12 +944,14 @@ function buildRack(parent,rack){
       if(occ) occupiedLeft--;
 
       if(occ){
+        const palletZ = rack.depthType === 'DOUBLE' && bay % 2 === 0 ? 0.14 : -0.22;
+
         const palletBox = E('a-box', {
           class:'pallet',
-          position:`${localX} ${cellY - 0.012} ${-0.20}`,
+          position:`${localX} ${cellY - 0.012} ${palletZ}`,
           width:String((width/rack.bays)-0.06),
           height:'0.11',
-          depth:'0.20',
+          depth:rack.depthType === 'DOUBLE' ? '0.24' : '0.20',
           color:palletColor(ratio, rack.id, localCode),
           opacity:isHolo() ? '0.48' : '0.82',
           transparent:'true'
@@ -865,10 +967,10 @@ function buildRack(parent,rack){
   }
 
   group.appendChild(E('a-text', {
-    value:special ? `${rack.id} *` : rack.id,
+    value:rack.depthType === 'DOUBLE' ? `${rack.id} DP` : (special ? `${rack.id} *` : rack.id),
     position:`${-width/2} ${height+0.12} ${-depth/2-0.18}`,
     rotation:'-90 0 0',
-    color:special ? '#f1c40f' : '#4fc3f7',
+    color:rack.depthType === 'DOUBLE' ? '#f1c40f' : (special ? '#f1c40f' : '#4fc3f7'),
     width:'2.0'
   }));
 
@@ -881,15 +983,15 @@ function buildRoute(parent){
   parent.appendChild(route);
 
   const points = [
-    {x:-8.8,z:6.2},
-    {x:-8.8,z:2.35},
-    {x:-5.2,z:2.35},
-    {x:-5.2,z:0},
-    {x:-5.2,z:-2.35},
-    {x:1.6,z:-2.35},
-    {x:1.6,z:0},
-    {x:5.0,z:0},
-    {x:5.0,z:6.2}
+    {x:-9.5,z:6.1},
+    {x:-9.5,z:2.05},
+    {x:-6.2,z:2.05},
+    {x:-6.2,z:0},
+    {x:-6.2,z:-1.9},
+    {x:-0.95,z:-1.9},
+    {x:-0.95,z:-5.8},
+    {x:1.4,z:-5.8},
+    {x:4.9,z:6.1}
   ];
 
   for(let i=0;i<points.length-1;i++){
@@ -1035,14 +1137,14 @@ function highlightRack(id, silent=false){
   const r = entry.meta;
   const pct = Math.round(r.occ/r.cap*100);
   const items = INVENTORY.filter(i => i.local.startsWith(r.id + '-'));
-  const invText = items.length ? `<br>Inventario demo: <b>${items.length}</b> registro(s)` : '<br>Inventario demo: sin registros directos';
+  const typeText = r.depthType === 'DOUBLE' ? '<br><b>Tipo:</b> Rack doble profundidad / especial' : (isSpecialRack(r.id) ? '<br><b>Tipo:</b> Rack especial / lógica prioritaria' : '');
 
   if(!silent){
     updateInfo(
       `<b>Rack seleccionado:</b> ${r.id}<br>` +
-      `Zona: <b>${r.zone}</b>${isSpecialRack(r.id) ? '<br><b>Tipo:</b> Rack especial / lógica prioritaria' : ''}<br>` +
-      `Ocupación: <b>${r.occ}/${r.cap}</b> · <b>${pct}%</b>` +
-      invText
+      `Zona: <b>${r.zone}</b>${typeText}<br>` +
+      `Ocupación: <b>${r.occ}/${r.cap}</b> · <b>${pct}%</b><br>` +
+      `Inventario demo: <b>${items.length}</b> registro(s)`
     );
   }
 }
@@ -1221,7 +1323,7 @@ function toggleRoute(){
   const route = document.getElementById('routeGroup');
   if(route) route.setAttribute('visible',routeVisible ? 'true' : 'false');
 
-  updateInfo(routeVisible ? '<b>Ruta pick activa.</b>' : '<b>Ruta pick oculta.</b>');
+  updateInfo(routeVisible ? '<b>Ruta pick activa.</b><br>Flujo visual: Recibo → Auditoría → Surtido → Packing → Embarque.' : '<b>Ruta pick oculta.</b>');
 }
 
 function toggleHeatmap(){
@@ -1245,7 +1347,7 @@ function toggleSpecialRacks(){
 
   updateInfo(
     specialVisible
-      ? '<b>Racks especiales activos.</b><br>Resaltados: <b>RC05, RC10, RC14, RC16</b>.'
+      ? '<b>Racks especiales activos.</b><br>Resaltados: <b>RC05, RC10, RC14, RC16</b>. RC16 se muestra como doble profundidad.'
       : '<b>Racks especiales ocultos.</b>'
   );
 }
@@ -1548,7 +1650,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.8 Búsqueda operativa activa. Busca NP, lote, rack o local.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.9 Layout real operativo activo. RC16 ahora se representa como rack especial de doble profundidad.');
   });
 
   marker.addEventListener('markerLost', () => {
