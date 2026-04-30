@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.5 Selección Táctil Segura</title>
+<title>MiniWMS AR · V8.6 Ajuste Fino</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -137,6 +137,7 @@ button.green{border-color:#27ae60;color:#55efc4}
 button.orange{border-color:#e67e22;color:#f39c12}
 button.purple{border-color:#9b59b6;color:#d7b4ea}
 button.red{border-color:#e74c3c;color:#ff9999}
+button.yellow{border-color:#f1c40f;color:#ffe066}
 
 .searchRow{
   display:flex;
@@ -202,7 +203,7 @@ button.red{border-color:#e74c3c;color:#ff9999}
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.5</h1>
+  <h1>🏭 MiniWMS AR · V8.6</h1>
   <p>Vista AR tipo maqueta operativa</p>
 </div>
 
@@ -224,6 +225,9 @@ button.red{border-color:#e74c3c;color:#ff9999}
 
     <button class="primary" onclick="toggleStyleMode()">Visual</button>
     <button class="orange" onclick="toggleAnchor()">Base AR</button>
+
+    <button class="yellow" onclick="centerWarehouse()">Centrar</button>
+    <button class="yellow" onclick="comfortableView()">Vista cómoda</button>
 
     <button class="purple" onclick="toggleDetail()">Detalle</button>
     <button class="red" onclick="clearHighlight()">Limpiar</button>
@@ -311,10 +315,14 @@ let styleMode = 'realista';
 let highDetail = true;
 let warehouseVisible = true;
 let anchorVisible = true;
+
 let currentScale = 0.060;
 let currentRotation = 0;
 let offsetX = 0;
 let offsetZ = 0;
+
+let selectedRackId = null;
+let selectedLocalCode = null;
 
 let touchState = null;
 let suppressNextClick = false;
@@ -404,6 +412,8 @@ function buildWarehouse(){
     color:'#4fc3f7',
     width:'5.8'
   }));
+
+  restoreSelection();
 }
 
 function buildFloor(parent){
@@ -413,7 +423,7 @@ function buildFloor(parent){
     height:'0.08',
     depth:'14.2',
     color:'#050a16',
-    opacity:'0.74',
+    opacity:'0.72',
     transparent:'true'
   }));
 
@@ -770,6 +780,7 @@ function clearHighlight(showMsg=true){
   document.querySelectorAll('.rack a-box').forEach(box => {
     box.removeAttribute('emissive');
     box.removeAttribute('emissiveIntensity');
+    box.removeAttribute('animation__pulse');
   });
 
   const localHighlight = document.getElementById('localHighlight');
@@ -777,32 +788,68 @@ function clearHighlight(showMsg=true){
     localHighlight.parentNode.removeChild(localHighlight);
   }
 
+  selectedRackId = null;
+  selectedLocalCode = null;
+
   if(showMsg){
     updateInfo('<b>Resaltado limpio.</b><br>Busca rack, local o NP demo.');
   }
 }
 
-function highlightRack(id){
+function restoreSelection(){
+  if(selectedLocalCode && localMap.has(selectedLocalCode)){
+    highlightLocal(selectedLocalCode, true);
+    return;
+  }
+
+  if(selectedRackId && rackMap.has(selectedRackId)){
+    highlightRack(selectedRackId, true);
+  }
+}
+
+function highlightRack(id, silent=false){
   clearHighlight(false);
+  selectedRackId = id;
+  selectedLocalCode = null;
+
   const entry = rackMap.get(id);
   if(!entry) return;
 
   entry.group.querySelectorAll('a-box').forEach(box => {
     box.setAttribute('emissive','#4fc3f7');
-    box.setAttribute('emissiveIntensity','0.38');
+    box.setAttribute('emissiveIntensity','0.50');
   });
 
+  const ring = E('a-ring', {
+    id:'localHighlight',
+    position:`${entry.meta.x} 0.12 ${entry.meta.z}`,
+    rotation:'-90 0 0',
+    radiusInner:'0.62',
+    radiusOuter:'0.76',
+    color:'#4fc3f7',
+    opacity:'0.72',
+    transparent:'true',
+    animation__pulse:'property: opacity; from: 0.28; to: 0.78; dir: alternate; dur: 650; loop: true'
+  });
+
+  document.getElementById('warehouse').appendChild(ring);
+
   const r = entry.meta;
-  updateInfo(
-    `<b>${r.id}</b><br>` +
-    `Ocupación: <b>${r.occ}/${r.cap}</b> (${Math.round(r.occ/r.cap*100)}%)<br>` +
-    `Niveles: <b>${r.levels}</b> · Locales/nivel: <b>${r.bays}</b><br>` +
-    `NP demo: ${r.nps.join(', ')}`
-  );
+  const pct = Math.round(r.occ/r.cap*100);
+
+  if(!silent){
+    updateInfo(
+      `<b>Rack seleccionado:</b> ${r.id}<br>` +
+      `Ocupación: <b>${r.occ}/${r.cap}</b> · <b>${pct}%</b><br>` +
+      `Niveles: <b>${r.levels}</b> · Locales por nivel: <b>${r.bays}</b><br>` +
+      `NP demo: <b>${r.nps.join(', ')}</b>`
+    );
+  }
 }
 
-function highlightLocal(code){
+function highlightLocal(code, silent=false){
   clearHighlight(false);
+  selectedLocalCode = code;
 
   const local = localMap.get(code);
   if(!local){
@@ -810,12 +857,14 @@ function highlightLocal(code){
     return;
   }
 
+  selectedRackId = local.rackId;
+
   const rack = rackMap.get(local.rackId);
   if(!rack) return;
 
   rack.group.querySelectorAll('a-box').forEach(box => {
     box.setAttribute('emissive','#4fc3f7');
-    box.setAttribute('emissiveIntensity','0.16');
+    box.setAttribute('emissiveIntensity','0.18');
   });
 
   const h = E('a-entity', {id:'localHighlight'});
@@ -827,26 +876,39 @@ function highlightLocal(code){
 
   h.appendChild(E('a-box', {
     position:`${worldX} ${worldY} ${worldZ}`,
-    width:'0.26',
-    height:'0.20',
-    depth:'0.24',
+    width:'0.30',
+    height:'0.24',
+    depth:'0.28',
     color:'#f39c12',
-    opacity:'0.42',
-    transparent:'true'
+    opacity:'0.48',
+    transparent:'true',
+    animation__pulse:'property: opacity; from: 0.25; to: 0.65; dir: alternate; dur: 650; loop: true'
   }));
 
   h.appendChild(E('a-sphere', {
     position:`${worldX} ${worldY+0.42} ${worldZ}`,
-    radius:'0.10',
+    radius:'0.11',
     color:'#4fc3f7',
     opacity:'0.95'
   }));
 
-  updateInfo(
-    `<b>Local encontrado</b><br>` +
-    `Ubicación: <b>${code}</b><br>` +
-    `Rack: <b>${local.rackId}</b> · Nivel: <b>${local.level}</b> · Local: <b>${String(local.bay).padStart(2,'0')}</b>`
-  );
+  h.appendChild(E('a-cylinder', {
+    position:`${worldX} ${worldY+0.20} ${worldZ}`,
+    radius:'0.025',
+    height:'0.40',
+    color:'#f39c12',
+    opacity:'0.80',
+    transparent:'true'
+  }));
+
+  if(!silent){
+    updateInfo(
+      `<b>Local seleccionado:</b> ${code}<br>` +
+      `Rack: <b>${local.rackId}</b><br>` +
+      `Nivel: <b>${local.level}</b> · Posición: <b>${String(local.bay).padStart(2,'0')}</b><br>` +
+      `Acción sugerida: revisar NP/lote asignado en MiniWMS maestro.`
+    );
+  }
 }
 
 function normalizeSearch(text){
@@ -899,12 +961,12 @@ function searchTarget(){
       if(entry){
         entry.group.querySelectorAll('a-box').forEach(box => {
           box.setAttribute('emissive','#55efc4');
-          box.setAttribute('emissiveIntensity','0.40');
+          box.setAttribute('emissiveIntensity','0.45');
         });
       }
     });
 
-    updateInfo(`<b>NP demo encontrado:</b> ${q}<br>Ubicaciones: <b>${hits.map(h=>h.id).join(', ')}</b>`);
+    updateInfo(`<b>NP demo encontrado:</b> ${q}<br>Ubicaciones relacionadas: <b>${hits.map(h=>h.id).join(', ')}</b>`);
     return;
   }
 
@@ -972,6 +1034,22 @@ function moveWarehouse(dx,dz){
   updateInfo(`<b>Offset:</b> X ${offsetX.toFixed(2)} · Z ${offsetZ.toFixed(2)}`);
 }
 
+function centerWarehouse(){
+  offsetX = 0;
+  offsetZ = 0;
+  applyTransforms();
+  updateInfo('<b>Vista centrada.</b><br>Se ajustó el almacén al centro del marcador sin cambiar escala ni modo.');
+}
+
+function comfortableView(){
+  currentScale = 0.074;
+  currentRotation = -18;
+  offsetX = 0;
+  offsetZ = 0.03;
+  applyTransforms();
+  updateInfo('<b>Vista cómoda activa.</b><br>Escala y ángulo ajustados para revisar racks con más facilidad.');
+}
+
 function resetWarehouse(){
   currentScale = 0.060;
   currentRotation = 0;
@@ -981,6 +1059,9 @@ function resetWarehouse(){
   warehouseVisible = true;
 
   document.getElementById('warehouse').setAttribute('visible','true');
+
+  selectedRackId = null;
+  selectedLocalCode = null;
 
   buildWarehouse();
   applyTransforms();
@@ -1240,7 +1321,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.5 Selección táctil segura activa.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.6 Ajuste fino activa. Usa “Vista cómoda” para revisar mejor los racks.');
   });
 
   marker.addEventListener('markerLost', () => {
