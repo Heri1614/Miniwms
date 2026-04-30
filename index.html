@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.7 Realismo Operativo</title>
+<title>MiniWMS AR · V8.8 Búsqueda Operativa</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -203,8 +203,8 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.7</h1>
-  <p>Vista AR tipo maqueta operativa</p>
+  <h1>🏭 MiniWMS AR · V8.8</h1>
+  <p>Búsqueda operativa NP / Lote</p>
 </div>
 
 <div id="status">Buscando HIRO...</div>
@@ -232,8 +232,8 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
     <button class="green" onclick="toggleSpecialRacks()">Racks especiales</button>
     <button class="purple" onclick="toggleDetail()">Detalle</button>
 
+    <button class="primary" onclick="showResultRoute()">Ruta resultado</button>
     <button class="red" onclick="clearHighlight()">Limpiar</button>
-    <button class="primary" onclick="operationalView()">Vista operativa</button>
   </div>
 
   <div class="mini-grid">
@@ -244,17 +244,17 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
   </div>
 
   <div class="searchRow">
-    <input id="searchInput" placeholder="Buscar: RC07, RC07-3-05, 98A1850" onkeydown="if(event.key==='Enter')searchTarget()">
+    <input id="searchInput" placeholder="NP, LOTE, RC07, RC07-3-05" onkeydown="if(event.key==='Enter')searchTarget()">
     <button class="primary" onclick="searchTarget()">Buscar</button>
   </div>
 
   <div id="info">
-    <b>Estado:</b> esperando marcador. Al detectarlo, se mostrará el layout AR tipo MiniWMS.
+    <b>Estado:</b> esperando marcador. Al detectarlo, se mostrará el layout operativo.
   </div>
 
   <div id="hint">
-    Racks especiales: <b>RC05, RC10, RC14, RC16</b>.<br>
-    Con controles ocultos: 1 dedo gira. 2 dedos acercan o mueven. Toque corto intenta seleccionar.
+    Prueba: <b>98A1850</b>, <b>L2401-A</b>, <b>RC07-3-05</b>, <b>100506046</b>.<br>
+    Estados: verde disponible, naranja picking, morado auditoría, rojo bloqueado.
   </div>
 
   <div style="margin-top:8px">
@@ -291,28 +291,45 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 const SPECIAL_RACKS = ['RC05','RC10','RC14','RC16'];
 
 const RACKS = [
-  {id:'RC01', x:-8.6, z:-4.8, levels:4, bays:8, occ:22, cap:32, nps:['98A1850','100506046'], zone:'SURTIDO', dir:'LTR'},
-  {id:'RC02', x:-5.2, z:-4.8, levels:4, bays:8, occ:26, cap:32, nps:['99B5492','E7137200'], zone:'SURTIDO', dir:'RTL'},
-  {id:'RC03', x:-1.8, z:-4.8, levels:4, bays:8, occ:14, cap:32, nps:['C5520','J4500'], zone:'SURTIDO', dir:'LTR'},
-  {id:'RC04', x: 1.6, z:-4.8, levels:4, bays:8, occ:28, cap:32, nps:['100506046','K8810'], zone:'PACKING', dir:'RTL'},
-  {id:'RC05', x: 5.0, z:-4.8, levels:4, bays:8, occ:31, cap:32, nps:['98A1850','D3301'], zone:'ESPECIAL', dir:'LTR'},
+  {id:'RC01', x:-8.6, z:-4.8, levels:4, bays:8, occ:22, cap:32, zone:'SURTIDO'},
+  {id:'RC02', x:-5.2, z:-4.8, levels:4, bays:8, occ:26, cap:32, zone:'SURTIDO'},
+  {id:'RC03', x:-1.8, z:-4.8, levels:4, bays:8, occ:14, cap:32, zone:'SURTIDO'},
+  {id:'RC04', x: 1.6, z:-4.8, levels:4, bays:8, occ:28, cap:32, zone:'PACKING'},
+  {id:'RC05', x: 5.0, z:-4.8, levels:4, bays:8, occ:31, cap:32, zone:'ESPECIAL'},
 
-  {id:'RC06', x:-8.6, z: 0.0, levels:5, bays:8, occ:35, cap:40, nps:['T1010','98A1850'], zone:'AUDITORIA', dir:'LTR'},
-  {id:'RC07', x:-5.2, z: 0.0, levels:5, bays:8, occ:37, cap:40, nps:['100506046','98A1850'], zone:'AUDITORIA', dir:'RTL'},
-  {id:'RC08', x:-1.8, z: 0.0, levels:5, bays:8, occ:16, cap:40, nps:['Q5510','N9900'], zone:'CENTRAL', dir:'LTR'},
-  {id:'RC09', x: 1.6, z: 0.0, levels:5, bays:8, occ:39, cap:40, nps:['E7137200','C5520'], zone:'PACKING', dir:'RTL'},
-  {id:'RC10', x: 5.0, z: 0.0, levels:5, bays:8, occ:32, cap:40, nps:['100506046','99B5492'], zone:'ESPECIAL', dir:'LTR'},
+  {id:'RC06', x:-8.6, z: 0.0, levels:5, bays:8, occ:35, cap:40, zone:'AUDITORIA'},
+  {id:'RC07', x:-5.2, z: 0.0, levels:5, bays:8, occ:37, cap:40, zone:'AUDITORIA'},
+  {id:'RC08', x:-1.8, z: 0.0, levels:5, bays:8, occ:16, cap:40, zone:'CENTRAL'},
+  {id:'RC09', x: 1.6, z: 0.0, levels:5, bays:8, occ:39, cap:40, zone:'PACKING'},
+  {id:'RC10', x: 5.0, z: 0.0, levels:5, bays:8, occ:32, cap:40, zone:'ESPECIAL'},
 
-  {id:'RC11', x:-8.6, z: 4.8, levels:4, bays:8, occ:12, cap:32, nps:['P1100','U1120'], zone:'RECIBO', dir:'LTR'},
-  {id:'RC12', x:-5.2, z: 4.8, levels:4, bays:8, occ:29, cap:32, nps:['98A1850','M3300'], zone:'RECIBO', dir:'RTL'},
-  {id:'RC13', x:-1.8, z: 4.8, levels:4, bays:8, occ:18, cap:32, nps:['R4400','S5521'], zone:'RECIBO', dir:'LTR'},
-  {id:'RC14', x: 1.6, z: 4.8, levels:4, bays:8, occ:30, cap:32, nps:['100506046','98A1850'], zone:'ESPECIAL', dir:'RTL'},
-  {id:'RC16', x: 5.0, z: 4.8, levels:5, bays:8, occ:38, cap:40, nps:['70CR','E7137200'], zone:'ESPECIAL', dir:'LTR'}
+  {id:'RC11', x:-8.6, z: 4.8, levels:4, bays:8, occ:12, cap:32, zone:'RECIBO'},
+  {id:'RC12', x:-5.2, z: 4.8, levels:4, bays:8, occ:29, cap:32, zone:'RECIBO'},
+  {id:'RC13', x:-1.8, z: 4.8, levels:4, bays:8, occ:18, cap:32, zone:'RECIBO'},
+  {id:'RC14', x: 1.6, z: 4.8, levels:4, bays:8, occ:30, cap:32, zone:'ESPECIAL'},
+  {id:'RC16', x: 5.0, z: 4.8, levels:5, bays:8, occ:38, cap:40, zone:'ESPECIAL'}
+];
+
+const INVENTORY = [
+  {np:'98A1850', lot:'L2401-A', local:'RC07-3-05', qty:27000, boxes:3, status:'Disponible'},
+  {np:'98A1850', lot:'L2401-B', local:'RC14-2-06', qty:18000, boxes:2, status:'Picking'},
+  {np:'98A1850', lot:'L2402-A', local:'RC12-4-02', qty:9000, boxes:1, status:'Auditoría'},
+
+  {np:'100506046', lot:'L2503-X', local:'RC10-2-04', qty:12000, boxes:4, status:'Disponible'},
+  {np:'100506046', lot:'L2503-Y', local:'RC04-1-07', qty:6000, boxes:2, status:'Bloqueado'},
+  {np:'100506046', lot:'L2504-Z', local:'RC14-4-03', qty:9000, boxes:3, status:'Picking'},
+
+  {np:'99B5492', lot:'L2409-C', local:'RC05-1-02', qty:15000, boxes:5, status:'Disponible'},
+  {np:'E7137200', lot:'L2311-Q', local:'RC08-5-04', qty:1200, boxes:6, status:'Auditoría'},
+  {np:'70CR', lot:'L2510-R', local:'RC16-2-06', qty:4800, boxes:8, status:'Disponible'},
+  {np:'1110CR', lot:'L2407-M', local:'RC14-4-03', qty:3000, boxes:3, status:'Picking'},
+  {np:'D3301', lot:'L2501-D', local:'RC05-3-08', qty:7500, boxes:5, status:'Bloqueado'}
 ];
 
 let rackMap = new Map();
 let localMap = new Map();
 let pickableEls = [];
+let lastSearchResults = [];
 
 let routeVisible = false;
 let heatmap = false;
@@ -344,12 +361,40 @@ function updateInfo(html){
   document.getElementById('info').innerHTML = html;
 }
 
+function normalizeSearch(text){
+  return String(text || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g,'')
+    .replace(/[–—]/g,'-');
+}
+
 function isSpecialRack(id){
   return SPECIAL_RACKS.includes(id);
 }
 
 function isHolo(){
   return styleMode === 'holograma';
+}
+
+function getInventoryByLocal(local){
+  return INVENTORY.find(i => i.local === local);
+}
+
+function getStatusColor(status){
+  if(status === 'Disponible') return '#55efc4';
+  if(status === 'Picking') return '#f39c12';
+  if(status === 'Auditoría') return '#9b59b6';
+  if(status === 'Bloqueado') return '#e74c3c';
+  return '#4fc3f7';
+}
+
+function getSuggestedAction(status){
+  if(status === 'Disponible') return 'Disponible para surtido o validación.';
+  if(status === 'Picking') return 'Validar si ya fue solicitado o está en proceso.';
+  if(status === 'Auditoría') return 'Revisar con auditor antes de mover.';
+  if(status === 'Bloqueado') return 'No surtir. Revisar bloqueo/calidad.';
+  return 'Revisar información en MiniWMS maestro.';
 }
 
 function frameColor(ratio, rackId){
@@ -364,7 +409,10 @@ function frameColor(ratio, rackId){
   return isHolo() ? '#4fc3f7' : '#5f7284';
 }
 
-function palletColor(ratio, rackId){
+function palletColor(ratio, rackId, localCode){
+  const inv = getInventoryByLocal(localCode);
+  if(inv) return getStatusColor(inv.status);
+
   if(specialVisible && isSpecialRack(rackId)) return '#f39c12';
 
   if(heatmap){
@@ -378,16 +426,6 @@ function palletColor(ratio, rackId){
 
 function localPanelColor(){
   return isHolo() ? '#4fc3f7' : '#0e1e38';
-}
-
-function zoneColor(zone){
-  if(zone === 'RECIBO') return '#55efc4';
-  if(zone === 'SURTIDO') return '#f39c12';
-  if(zone === 'AUDITORIA') return '#9b59b6';
-  if(zone === 'PACKING') return '#4fc3f7';
-  if(zone === 'EMBARQUE') return '#3498db';
-  if(zone === 'ESPECIAL') return '#f1c40f';
-  return '#5f7284';
 }
 
 function makePickable(el, action, meta){
@@ -435,7 +473,7 @@ function buildWarehouse(){
   buildRoute(w);
 
   w.appendChild(E('a-text', {
-    value:'MiniWMS Layout Operativo · CEVA AR',
+    value:'MiniWMS Operativo · NP / Lote / Local',
     position:'-10.2 0.16 -6.75',
     rotation:'-90 0 0',
     color:'#4fc3f7',
@@ -713,7 +751,6 @@ function buildRack(parent,rack){
   const levelGap = 0.285;
   const height = rack.levels * levelGap + 0.08;
   const fColor = frameColor(ratio, rack.id);
-  const pColor = palletColor(ratio, rack.id);
   const special = isSpecialRack(rack.id);
 
   group.appendChild(E('a-box', {
@@ -753,10 +790,7 @@ function buildRack(parent,rack){
         transparent:'true'
       });
 
-      makePickable(post, function(){
-        highlightRack(rack.id);
-      }, {type:'rack', rackId:rack.id});
-
+      makePickable(post, function(){ highlightRack(rack.id); }, {type:'rack', rackId:rack.id});
       group.appendChild(post);
     });
   }
@@ -775,10 +809,7 @@ function buildRack(parent,rack){
         transparent:'true'
       });
 
-      makePickable(beam, function(){
-        highlightRack(rack.id);
-      }, {type:'rack', rackId:rack.id});
-
+      makePickable(beam, function(){ highlightRack(rack.id); }, {type:'rack', rackId:rack.id});
       group.appendChild(beam);
     });
   }
@@ -792,6 +823,7 @@ function buildRack(parent,rack){
       const cellY = (lv - 0.5)*levelGap + 0.06;
       const frontZ = -depth/2 - 0.02;
       const localCode = `${rack.id}-${lv}-${String(bay).padStart(2,'0')}`;
+      const inv = getInventoryByLocal(localCode);
 
       if(highDetail){
         const localPanel = E('a-box', {
@@ -799,15 +831,12 @@ function buildRack(parent,rack){
           width:String((width/rack.bays)-0.035),
           height:'0.17',
           depth:'0.035',
-          color:localPanelColor(),
-          opacity:isHolo() ? '0.30' : '0.62',
+          color:inv ? getStatusColor(inv.status) : localPanelColor(),
+          opacity:inv ? '0.48' : (isHolo() ? '0.30' : '0.62'),
           transparent:'true'
         });
 
-        makePickable(localPanel, function(){
-          highlightLocal(localCode);
-        }, {type:'local', rackId:rack.id, localCode});
-
+        makePickable(localPanel, function(){ highlightLocal(localCode); }, {type:'local', rackId:rack.id, localCode});
         group.appendChild(localPanel);
       }
 
@@ -821,15 +850,12 @@ function buildRack(parent,rack){
           width:String((width/rack.bays)-0.06),
           height:'0.11',
           depth:'0.20',
-          color:pColor,
+          color:palletColor(ratio, rack.id, localCode),
           opacity:isHolo() ? '0.48' : '0.82',
           transparent:'true'
         });
 
-        makePickable(palletBox, function(){
-          highlightLocal(localCode);
-        }, {type:'local', rackId:rack.id, localCode});
-
+        makePickable(palletBox, function(){ highlightLocal(localCode); }, {type:'local', rackId:rack.id, localCode});
         group.appendChild(palletBox);
       }
 
@@ -889,6 +915,57 @@ function buildRoute(parent){
   }
 }
 
+function buildResultPins(results){
+  const w = document.getElementById('warehouse');
+  const old = document.getElementById('searchResultsGroup');
+  if(old) old.parentNode.removeChild(old);
+
+  const group = E('a-entity', {id:'searchResultsGroup'});
+  w.appendChild(group);
+
+  results.forEach((item, index) => {
+    const local = localMap.get(item.local);
+    if(!local) return;
+    const rack = rackMap.get(local.rackId);
+    if(!rack) return;
+
+    const x = rack.meta.x + local.x;
+    const y = local.y + 0.38;
+    const z = rack.meta.z + local.z;
+    const color = getStatusColor(item.status);
+
+    group.appendChild(E('a-sphere', {
+      position:`${x} ${y} ${z}`,
+      radius:'0.13',
+      color,
+      opacity:'0.95',
+      animation__pulse:'property: scale; from: 1 1 1; to: 1.4 1.4 1.4; dir: alternate; dur: 600; loop: true'
+    }));
+
+    group.appendChild(E('a-cylinder', {
+      position:`${x} ${y-0.22} ${z}`,
+      radius:'0.025',
+      height:'0.42',
+      color,
+      opacity:'0.80',
+      transparent:'true'
+    }));
+
+    group.appendChild(E('a-text', {
+      value:`${index+1}`,
+      position:`${x-0.05} ${y+0.17} ${z}`,
+      rotation:'-90 0 0',
+      color:'#ffffff',
+      width:'1.3'
+    }));
+  });
+}
+
+function clearResultPins(){
+  const old = document.getElementById('searchResultsGroup');
+  if(old) old.parentNode.removeChild(old);
+}
+
 function applyTransforms(){
   const w = document.getElementById('warehouse');
   w.setAttribute('position',`${offsetX} 0.042 ${offsetZ}`);
@@ -904,15 +981,16 @@ function clearHighlight(showMsg=true){
   });
 
   const localHighlight = document.getElementById('localHighlight');
-  if(localHighlight){
-    localHighlight.parentNode.removeChild(localHighlight);
-  }
+  if(localHighlight) localHighlight.parentNode.removeChild(localHighlight);
+
+  clearResultPins();
 
   selectedRackId = null;
   selectedLocalCode = null;
+  lastSearchResults = [];
 
   if(showMsg){
-    updateInfo('<b>Resaltado limpio.</b><br>Busca rack, local o NP demo.');
+    updateInfo('<b>Resaltado limpio.</b><br>Busca por NP, lote, rack o local.');
   }
 }
 
@@ -956,15 +1034,15 @@ function highlightRack(id, silent=false){
 
   const r = entry.meta;
   const pct = Math.round(r.occ/r.cap*100);
-  const specialText = isSpecialRack(r.id) ? '<br><b>Tipo:</b> Rack especial / lógica prioritaria' : '';
+  const items = INVENTORY.filter(i => i.local.startsWith(r.id + '-'));
+  const invText = items.length ? `<br>Inventario demo: <b>${items.length}</b> registro(s)` : '<br>Inventario demo: sin registros directos';
 
   if(!silent){
     updateInfo(
       `<b>Rack seleccionado:</b> ${r.id}<br>` +
-      `Zona: <b>${r.zone}</b>${specialText}<br>` +
-      `Ocupación: <b>${r.occ}/${r.cap}</b> · <b>${pct}%</b><br>` +
-      `Niveles: <b>${r.levels}</b> · Locales por nivel: <b>${r.bays}</b><br>` +
-      `NP demo: <b>${r.nps.join(', ')}</b>`
+      `Zona: <b>${r.zone}</b>${isSpecialRack(r.id) ? '<br><b>Tipo:</b> Rack especial / lógica prioritaria' : ''}<br>` +
+      `Ocupación: <b>${r.occ}/${r.cap}</b> · <b>${pct}%</b>` +
+      invText
     );
   }
 }
@@ -989,6 +1067,9 @@ function highlightLocal(code, silent=false){
     box.setAttribute('emissiveIntensity','0.18');
   });
 
+  const inv = getInventoryByLocal(code);
+  const color = inv ? getStatusColor(inv.status) : '#f39c12';
+
   const h = E('a-entity', {id:'localHighlight'});
   document.getElementById('warehouse').appendChild(h);
 
@@ -1001,16 +1082,16 @@ function highlightLocal(code, silent=false){
     width:'0.30',
     height:'0.24',
     depth:'0.28',
-    color:'#f39c12',
-    opacity:'0.48',
+    color,
+    opacity:'0.52',
     transparent:'true',
-    animation__pulse:'property: opacity; from: 0.25; to: 0.65; dir: alternate; dur: 650; loop: true'
+    animation__pulse:'property: opacity; from: 0.25; to: 0.68; dir: alternate; dur: 650; loop: true'
   }));
 
   h.appendChild(E('a-sphere', {
     position:`${worldX} ${worldY+0.42} ${worldZ}`,
     radius:'0.11',
-    color:'#4fc3f7',
+    color,
     opacity:'0.95'
   }));
 
@@ -1018,34 +1099,37 @@ function highlightLocal(code, silent=false){
     position:`${worldX} ${worldY+0.20} ${worldZ}`,
     radius:'0.025',
     height:'0.40',
-    color:'#f39c12',
+    color,
     opacity:'0.80',
     transparent:'true'
   }));
 
   if(!silent){
-    updateInfo(
-      `<b>Local seleccionado:</b> ${code}<br>` +
-      `Rack: <b>${local.rackId}</b> · Zona: <b>${rack.meta.zone}</b><br>` +
-      `Nivel: <b>${local.level}</b> · Posición: <b>${String(local.bay).padStart(2,'0')}</b><br>` +
-      `Acción sugerida: validar NP/lote en MiniWMS maestro.`
-    );
+    if(inv){
+      updateInfo(
+        `<b>Local seleccionado:</b> ${code}<br>` +
+        `Rack: <b>${local.rackId}</b> · Zona: <b>${rack.meta.zone}</b><br>` +
+        `NP: <b>${inv.np}</b> · Lote: <b>${inv.lot}</b><br>` +
+        `Qty: <b>${inv.qty}</b> · Boxes: <b>${inv.boxes}</b><br>` +
+        `Estado: <b style="color:${color}">${inv.status}</b><br>` +
+        `Acción: ${getSuggestedAction(inv.status)}`
+      );
+    }else{
+      updateInfo(
+        `<b>Local seleccionado:</b> ${code}<br>` +
+        `Rack: <b>${local.rackId}</b> · Zona: <b>${rack.meta.zone}</b><br>` +
+        `Sin inventario demo asignado.<br>` +
+        `Acción: revisar local en MiniWMS maestro.`
+      );
+    }
   }
-}
-
-function normalizeSearch(text){
-  return text
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g,'')
-    .replace(/[–—]/g,'-');
 }
 
 function searchTarget(){
   const q = normalizeSearch(document.getElementById('searchInput').value);
 
   if(!q){
-    updateInfo('Escribe un rack, local o NP demo.');
+    updateInfo('Escribe NP, lote, rack o local.');
     return;
   }
 
@@ -1059,64 +1143,99 @@ function searchTarget(){
     return;
   }
 
-  const inventory = {
-    '98A1850':'RC07-3-05',
-    '100506046':'RC10-2-04',
-    '1110CR':'RC14-4-03',
-    '70CR':'RC16-2-06',
-    '99B5492':'RC05-1-02',
-    'E7137200':'RC08-5-04'
-  };
+  const hits = INVENTORY.filter(i =>
+    normalizeSearch(i.np) === q ||
+    normalizeSearch(i.lot) === q ||
+    normalizeSearch(i.local) === q ||
+    normalizeSearch(i.np).includes(q) ||
+    normalizeSearch(i.lot).includes(q)
+  );
 
-  if(inventory[q]){
-    highlightLocal(inventory[q]);
+  if(hits.length === 1){
+    lastSearchResults = hits;
+    highlightLocal(hits[0].local);
+    buildResultPins(hits);
     return;
   }
 
-  const hits = RACKS.filter(r => r.nps.some(np => np.includes(q)));
-
-  if(hits.length){
+  if(hits.length > 1){
     clearHighlight(false);
+    lastSearchResults = hits;
+    buildResultPins(hits);
 
-    hits.forEach(r => {
-      const entry = rackMap.get(r.id);
-      if(entry){
-        entry.group.querySelectorAll('a-box').forEach(box => {
-          box.setAttribute('emissive','#55efc4');
-          box.setAttribute('emissiveIntensity','0.45');
-        });
-      }
+    hits.forEach(item => {
+      const local = localMap.get(item.local);
+      if(!local) return;
+      const rack = rackMap.get(local.rackId);
+      if(!rack) return;
+
+      rack.group.querySelectorAll('a-box').forEach(box => {
+        box.setAttribute('emissive', getStatusColor(item.status));
+        box.setAttribute('emissiveIntensity','0.42');
+      });
     });
 
-    updateInfo(`<b>NP demo encontrado:</b> ${q}<br>Ubicaciones relacionadas: <b>${hits.map(h=>h.id).join(', ')}</b>`);
+    const rows = hits.map((h, idx) =>
+      `${idx+1}) <b>${h.local}</b> · ${h.lot} · ${h.qty} pcs · <span style="color:${getStatusColor(h.status)}">${h.status}</span>`
+    ).join('<br>');
+
+    updateInfo(
+      `<b>Búsqueda:</b> ${q}<br>` +
+      `Resultados: <b>${hits.length}</b><br>` +
+      rows +
+      `<br><br>Usa <b>Ruta resultado</b> para guiar visualmente hacia el primer resultado.`
+    );
+
     return;
   }
 
-  updateInfo(`No encontré: <b>${q}</b>`);
+  updateInfo(`No encontré: <b>${q}</b><br>Prueba: 98A1850, L2401-A, RC07-3-05.`);
+}
+
+function showResultRoute(){
+  if(!lastSearchResults.length){
+    updateInfo('<b>Ruta resultado:</b> primero busca un NP, lote o local.');
+    return;
+  }
+
+  routeVisible = true;
+  const route = document.getElementById('routeGroup');
+  if(route) route.setAttribute('visible','true');
+
+  const first = lastSearchResults[0];
+  const local = localMap.get(first.local);
+  if(local){
+    highlightLocal(first.local);
+  }
+
+  updateInfo(
+    `<b>Ruta hacia resultado activa.</b><br>` +
+    `Primer objetivo: <b>${first.local}</b><br>` +
+    `NP: <b>${first.np}</b> · Lote: <b>${first.lot}</b><br>` +
+    `Estado: <b style="color:${getStatusColor(first.status)}">${first.status}</b>`
+  );
 }
 
 function toggleRoute(){
   routeVisible = !routeVisible;
   const route = document.getElementById('routeGroup');
-  if(route){
-    route.setAttribute('visible',routeVisible ? 'true' : 'false');
-  }
+  if(route) route.setAttribute('visible',routeVisible ? 'true' : 'false');
 
-  updateInfo(routeVisible ? '<b>Ruta pick activa.</b><br>Recorrido ilustrativo Recibo → Auditoría → Surtido → Packing → Embarque.' : '<b>Ruta pick oculta.</b>');
+  updateInfo(routeVisible ? '<b>Ruta pick activa.</b>' : '<b>Ruta pick oculta.</b>');
 }
 
 function toggleHeatmap(){
   heatmap = !heatmap;
   buildWarehouse();
   applyTransforms();
-  updateInfo(heatmap ? '<b>Ocupación activa.</b><br>Verde bajo, naranja medio, rojo crítico.' : '<b>Ocupación desactivada.</b>');
+  updateInfo(heatmap ? '<b>Ocupación activa.</b>' : '<b>Ocupación desactivada.</b>');
 }
 
 function toggleStyleMode(){
   styleMode = isHolo() ? 'realista' : 'holograma';
   buildWarehouse();
   applyTransforms();
-  updateInfo(isHolo() ? '<b>Modo holograma activo.</b><br>Más brillo, transparencia y estilo AR.' : '<b>Modo realista activo.</b><br>Más sólido y operativo.');
+  updateInfo(isHolo() ? '<b>Modo holograma activo.</b>' : '<b>Modo realista activo.</b>');
 }
 
 function toggleSpecialRacks(){
@@ -1127,7 +1246,7 @@ function toggleSpecialRacks(){
   updateInfo(
     specialVisible
       ? '<b>Racks especiales activos.</b><br>Resaltados: <b>RC05, RC10, RC14, RC16</b>.'
-      : '<b>Racks especiales ocultos.</b><br>Se conserva la vista normal del almacén.'
+      : '<b>Racks especiales ocultos.</b>'
   );
 }
 
@@ -1135,7 +1254,7 @@ function toggleDetail(){
   highDetail = !highDetail;
   buildWarehouse();
   applyTransforms();
-  updateInfo(highDetail ? '<b>Detalle alto activo.</b><br>Más elementos visuales.' : '<b>Detalle bajo activo.</b><br>Mejor rendimiento en celular.');
+  updateInfo(highDetail ? '<b>Detalle alto activo.</b>' : '<b>Detalle bajo activo.</b>');
 }
 
 function toggleWarehouse(){
@@ -1172,7 +1291,7 @@ function centerWarehouse(){
   offsetX = 0;
   offsetZ = 0;
   applyTransforms();
-  updateInfo('<b>Vista centrada.</b><br>Se ajustó el almacén al centro del marcador sin cambiar escala ni modo.');
+  updateInfo('<b>Vista centrada.</b>');
 }
 
 function comfortableView(){
@@ -1181,24 +1300,7 @@ function comfortableView(){
   offsetX = 0;
   offsetZ = 0.03;
   applyTransforms();
-  updateInfo('<b>Vista cómoda activa.</b><br>Escala y ángulo ajustados para revisar racks con más facilidad.');
-}
-
-function operationalView(){
-  currentScale = 0.068;
-  currentRotation = -28;
-  offsetX = -0.02;
-  offsetZ = 0.02;
-  routeVisible = true;
-  specialVisible = true;
-
-  buildWarehouse();
-  applyTransforms();
-
-  const route = document.getElementById('routeGroup');
-  if(route) route.setAttribute('visible','true');
-
-  updateInfo('<b>Vista operativa activa.</b><br>Ruta pick y racks especiales visibles para revisión rápida.');
+  updateInfo('<b>Vista cómoda activa.</b>');
 }
 
 function resetWarehouse(){
@@ -1209,6 +1311,7 @@ function resetWarehouse(){
   routeVisible = false;
   warehouseVisible = true;
   specialVisible = false;
+  lastSearchResults = [];
 
   document.getElementById('warehouse').setAttribute('visible','true');
 
@@ -1219,7 +1322,7 @@ function resetWarehouse(){
   applyTransforms();
   clearHighlight(false);
 
-  updateInfo('<b>Vista reiniciada.</b><br>Layout centrado sobre el marcador.');
+  updateInfo('<b>Vista reiniciada.</b>');
 }
 
 function hideControls(){
@@ -1272,22 +1375,14 @@ function getPickActionFromObject(obj){
 
 function pickByRay(clientX, clientY){
   const scene = document.getElementById('scene');
+  if(!scene || !scene.camera || !scene.canvas) return false;
 
-  if(!scene || !scene.camera || !scene.canvas){
-    return false;
-  }
-
-  if(!raycaster){
-    raycaster = new THREE.Raycaster();
-  }
+  if(!raycaster) raycaster = new THREE.Raycaster();
 
   const ndc = getCanvasPoint(clientX, clientY);
   raycaster.setFromCamera(ndc, scene.camera);
 
-  const objects = pickableEls
-    .filter(el => el && el.object3D)
-    .map(el => el.object3D);
-
+  const objects = pickableEls.filter(el => el && el.object3D).map(el => el.object3D);
   const hits = raycaster.intersectObjects(objects, true);
 
   for(let i=0; i<hits.length; i++){
@@ -1303,10 +1398,7 @@ function pickByRay(clientX, clientY){
 
 function pickNearestRack(clientX, clientY){
   const scene = document.getElementById('scene');
-
-  if(!scene || !scene.camera || !scene.canvas){
-    return false;
-  }
+  if(!scene || !scene.camera || !scene.canvas) return false;
 
   const canvas = scene.canvas;
   const rect = canvas.getBoundingClientRect();
@@ -1342,16 +1434,9 @@ function pickNearestRack(clientX, clientY){
 }
 
 function selectFromTap(clientX, clientY){
-  const byRay = pickByRay(clientX, clientY);
-
-  if(byRay){
-    return;
-  }
-
-  const byNearest = pickNearestRack(clientX, clientY);
-
-  if(!byNearest){
-    updateInfo('<b>Selección:</b> no detecté rack en ese toque.<br>Acércate un poco más o usa búsqueda por RC/NP.');
+  if(pickByRay(clientX, clientY)) return;
+  if(!pickNearestRack(clientX, clientY)){
+    updateInfo('<b>Selección:</b> no detecté rack en ese toque.<br>Acércate o usa búsqueda.');
   }
 }
 
@@ -1401,7 +1486,6 @@ function bindSafeTouchControls(){
 
     canvas.addEventListener('touchmove', function(e){
       if(!touchState) return;
-
       e.preventDefault();
 
       if(touchState.mode === 'rotate' && e.touches.length === 1){
@@ -1426,7 +1510,6 @@ function bindSafeTouchControls(){
         const ratio = dist / Math.max(1,touchState.startDistance);
 
         currentScale = Math.max(0.024,Math.min(0.16,touchState.startScale * ratio));
-
         offsetX = touchState.startOffsetX + (mid.x - touchState.startMidX) * 0.004;
         offsetZ = touchState.startOffsetZ + (mid.y - touchState.startMidY) * 0.004;
 
@@ -1438,28 +1521,20 @@ function bindSafeTouchControls(){
     canvas.addEventListener('touchend', function(e){
       if(touchState && touchState.mode === 'rotate' && !touchState.moved){
         const t = e.changedTouches && e.changedTouches[0];
-
-        if(t){
-          selectFromTap(t.clientX, t.clientY);
-        }
+        if(t) selectFromTap(t.clientX, t.clientY);
       }
 
       if(touchState && touchState.moved){
         suppressNextClick = true;
-        setTimeout(function(){
-          suppressNextClick = false;
-        },250);
+        setTimeout(function(){ suppressNextClick = false; },250);
       }
 
       touchState = null;
     }, {passive:true});
   }
 
-  if(scene.hasLoaded){
-    attach();
-  }else{
-    scene.addEventListener('loaded', attach);
-  }
+  if(scene.hasLoaded) attach();
+  else scene.addEventListener('loaded', attach);
 }
 
 window.addEventListener('load', () => {
@@ -1473,7 +1548,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.7 Realismo operativo activo. Prueba “Vista operativa” y “Racks especiales”.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.8 Búsqueda operativa activa. Busca NP, lote, rack o local.');
   });
 
   marker.addEventListener('markerLost', () => {
