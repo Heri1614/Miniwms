@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V8.3 Selección Mejorada</title>
+<title>MiniWMS AR · V8.3.1 Selección Segura</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -234,7 +234,7 @@ button.red{
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V8.3</h1>
+  <h1>🏭 MiniWMS AR · V8.3.1</h1>
   <p>Vista AR tipo maqueta operativa · racks, zonas, locales, ruta y búsqueda</p>
 </div>
 
@@ -383,6 +383,15 @@ function palletColor(ratio){
 
 function localPanelColor(){
   return isHolo() ? '#4fc3f7' : '#0e1e38';
+}
+
+function makePickable(el, action){
+  el.setAttribute('class', (el.getAttribute('class') || '') + ' pickable');
+  el.addEventListener('click', function(e){
+    e.stopPropagation();
+    action();
+  });
+  return el;
 }
 
 function buildWarehouse(){
@@ -605,26 +614,6 @@ function buildRack(parent,rack){
   const fColor = frameColor(ratio);
   const pColor = palletColor(ratio);
 
-  // Hitbox invisible del rack completo.
-  // No cambia el visual; solo facilita tocar el rack.
-  const rackHitBox = E('a-box', {
-    class:'pickable',
-    position:`0 ${height/2} 0`,
-    width:String(width + 0.55),
-    height:String(height + 0.55),
-    depth:String(depth + 0.65),
-    color:'#ffffff',
-    opacity:'0.001',
-    transparent:'true'
-  });
-
-  rackHitBox.addEventListener('click', function(e){
-    e.stopPropagation();
-    highlightRack(rack.id);
-  });
-
-  group.appendChild(rackHitBox);
-
   group.appendChild(E('a-box', {
     position:'0 0.03 0',
     width:String(width + 0.16),
@@ -639,7 +628,7 @@ function buildRack(parent,rack){
     const x = -width/2 + i*(width/rack.bays);
 
     [-depth/2, depth/2].forEach(z => {
-      group.appendChild(E('a-box', {
+      const post = E('a-box', {
         position:`${x} ${height/2} ${z}`,
         width:'0.035',
         height:String(height),
@@ -647,7 +636,13 @@ function buildRack(parent,rack){
         color:fColor,
         opacity:'0.92',
         transparent:'true'
-      }));
+      });
+
+      makePickable(post, function(){
+        highlightRack(rack.id);
+      });
+
+      group.appendChild(post);
     });
   }
 
@@ -655,7 +650,7 @@ function buildRack(parent,rack){
     const y = lv*levelGap + 0.04;
 
     [-depth/2, depth/2].forEach(z => {
-      group.appendChild(E('a-box', {
+      const beam = E('a-box', {
         position:`0 ${y} ${z}`,
         width:String(width + 0.08),
         height:'0.030',
@@ -663,7 +658,13 @@ function buildRack(parent,rack){
         color:'#5f7284',
         opacity:'0.88',
         transparent:'true'
-      }));
+      });
+
+      makePickable(beam, function(){
+        highlightRack(rack.id);
+      });
+
+      group.appendChild(beam);
     });
   }
 
@@ -679,7 +680,6 @@ function buildRack(parent,rack){
 
       if(highDetail){
         const localPanel = E('a-box', {
-          class:'pickable',
           position:`${localX} ${cellY} ${frontZ}`,
           width:String((width/rack.bays)-0.035),
           height:'0.17',
@@ -689,8 +689,7 @@ function buildRack(parent,rack){
           transparent:'true'
         });
 
-        localPanel.addEventListener('click', function(e){
-          e.stopPropagation();
+        makePickable(localPanel, function(){
           highlightLocal(localCode);
         });
 
@@ -702,7 +701,7 @@ function buildRack(parent,rack){
 
       if(occ){
         const palletBox = E('a-box', {
-          class:'pallet pickable',
+          class:'pallet',
           position:`${localX} ${cellY - 0.012} ${-0.20}`,
           width:String((width/rack.bays)-0.06),
           height:'0.11',
@@ -712,8 +711,7 @@ function buildRack(parent,rack){
           transparent:'true'
         });
 
-        palletBox.addEventListener('click', function(e){
-          e.stopPropagation();
+        makePickable(palletBox, function(){
           highlightLocal(localCode);
         });
 
@@ -731,11 +729,6 @@ function buildRack(parent,rack){
     rotation:'-70 0 0',
     color:'#4fc3f7',
     width:'2.0'
-  });
-
-  rackLabel.addEventListener('click', function(e){
-    e.stopPropagation();
-    highlightRack(rack.id);
   });
 
   group.appendChild(rackLabel);
@@ -1038,7 +1031,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo('<b>Marcador detectado.</b><br>V8.3 Selección Mejorada activa.');
+    updateInfo('<b>Marcador detectado.</b><br>V8.3.1 Selección Segura activa. Sin hitboxes gigantes.');
   });
 
   marker.addEventListener('markerLost', () => {
