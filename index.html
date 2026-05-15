@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>MiniWMS AR · V9.1 Validación CSV</title>
+<title>MiniWMS AR · V10.0 Control Tower</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -24,11 +24,9 @@ body{
   left:0;
   right:0;
   z-index:90;
-  min-height:38px;
   padding:6px 10px;
-  background:linear-gradient(180deg,rgba(5,10,22,.90),rgba(5,10,22,.50));
+  background:linear-gradient(180deg,rgba(5,10,22,.90),rgba(5,10,22,.45));
   border-bottom:1px solid rgba(79,195,247,.22);
-  backdrop-filter:blur(8px);
   pointer-events:none;
 }
 
@@ -37,14 +35,11 @@ body{
   color:#4fc3f7;
   font-weight:800;
   letter-spacing:.3px;
-  line-height:1.1;
 }
-
-#topbar p{display:none}
 
 #status{
   position:fixed;
-  top:46px;
+  top:44px;
   left:50%;
   transform:translateX(-50%);
   z-index:95;
@@ -57,7 +52,6 @@ body{
   color:#ffb3b3;
   font-size:11px;
   box-shadow:0 6px 18px rgba(0,0,0,.35);
-  backdrop-filter:blur(8px);
   pointer-events:none;
 }
 
@@ -75,10 +69,9 @@ body{
   z-index:100;
   padding:10px;
   border-radius:16px;
-  background:rgba(5,10,22,.90);
+  background:rgba(5,10,22,.92);
   border:1px solid #1b3660;
   box-shadow:0 12px 30px rgba(0,0,0,.48);
-  backdrop-filter:blur(10px);
   max-height:64vh;
   overflow-y:auto;
   touch-action:auto;
@@ -100,8 +93,6 @@ body{
   color:#4fc3f7;
   font-size:13px;
   font-weight:800;
-  box-shadow:0 8px 22px rgba(0,0,0,.42);
-  touch-action:auto;
 }
 
 #showControls.show{display:block}
@@ -148,7 +139,6 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 
 .searchRow input{
   flex:1 1 auto;
-  width:100%;
   min-width:0;
   padding:10px 9px;
   border-radius:10px;
@@ -163,12 +153,8 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
   text-transform:uppercase;
 }
 
-.searchRow input:focus{border-color:#4fc3f7}
-
 .searchRow button{
   flex:0 0 88px;
-  width:88px;
-  min-width:88px;
 }
 
 #info{
@@ -192,25 +178,16 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 }
 
 #csvInput{display:none}
-
 .warn{color:#ffe066}
 .err{color:#ff9999}
 .oktext{color:#55efc4}
-
-@media(max-width:420px){
-  .mini-grid button{
-    padding:9px 4px;
-    font-size:11.5px;
-  }
-}
 </style>
 </head>
 
 <body>
 
 <div id="topbar">
-  <h1>🏭 MiniWMS AR · V9.1 CSV</h1>
-  <p>Validación CSV + plantilla operativa</p>
+  <h1>🏭 MiniWMS AR · V10.0 Control Tower</h1>
 </div>
 
 <div id="status">Buscando HIRO...</div>
@@ -240,14 +217,14 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
     <button class="green" onclick="toggleSpecialRacks()">Racks especiales</button>
     <button class="purple" onclick="toggleDetail()">Detalle</button>
 
-    <button class="primary" onclick="showResultRoute()">Ruta resultado</button>
-    <button class="red" onclick="clearHighlight()">Limpiar</button>
-
     <button class="green" onclick="openCSVPicker()">Cargar CSV</button>
     <button class="yellow" onclick="restoreDemoData()">Datos demo</button>
 
-    <button class="primary" onclick="downloadCSVTemplate()">Descargar plantilla CSV</button>
+    <button class="primary" onclick="downloadCSVTemplate()">Plantilla CSV</button>
     <button class="orange" onclick="showCSVSummary()">Resumen CSV</button>
+
+    <button class="primary" onclick="showControlTower()">Control Tower</button>
+    <button class="red" onclick="clearHighlight()">Limpiar</button>
   </div>
 
   <div class="mini-grid">
@@ -268,7 +245,7 @@ button.yellow{border-color:#f1c40f;color:#ffe066}
 
   <div id="hint">
     CSV esperado: <b>NP, LOTE, LOCAL, QTY, BOXES, STATUS</b>.<br>
-    V9.1 valida locales, duplicados y resumen de carga.
+    Control Tower muestra operación, calidad, inventario detenido y condiciones de atención.
   </div>
 
   <div style="margin-top:8px">
@@ -330,11 +307,9 @@ const DEMO_INVENTORY = [
   {np:'98A1850', lot:'L2401-A', local:'RC07-3-05', qty:27000, boxes:3, status:'Disponible'},
   {np:'98A1850', lot:'L2401-B', local:'RC14-2-06', qty:18000, boxes:2, status:'Picking'},
   {np:'98A1850', lot:'L2402-A', local:'RC12-4-02', qty:9000, boxes:1, status:'Auditoría'},
-
   {np:'100506046', lot:'L2503-X', local:'RC10-2-04', qty:12000, boxes:4, status:'Disponible'},
   {np:'100506046', lot:'L2503-Y', local:'RC04-1-07', qty:6000, boxes:2, status:'Bloqueado'},
   {np:'100506046', lot:'L2504-Z', local:'RC14-4-03', qty:9000, boxes:3, status:'Picking'},
-
   {np:'99B5492', lot:'L2409-C', local:'RC05-1-02', qty:15000, boxes:5, status:'Disponible'},
   {np:'E7137200', lot:'L2311-Q', local:'RC08-5-04', qty:1200, boxes:6, status:'Auditoría'},
   {np:'70CR', lot:'L2510-R', local:'RC16-2-06', qty:4800, boxes:8, status:'Disponible'},
@@ -425,6 +400,22 @@ function normalizeStatus(status){
   return 'Disponible';
 }
 
+function getStatusColor(status){
+  if(status === 'Disponible') return '#55efc4';
+  if(status === 'Picking') return '#f39c12';
+  if(status === 'Auditoría') return '#9b59b6';
+  if(status === 'Bloqueado') return '#e74c3c';
+  return '#4fc3f7';
+}
+
+function getSuggestedAction(status){
+  if(status === 'Disponible') return 'Disponible para surtido o validación.';
+  if(status === 'Picking') return 'Validar si ya fue solicitado o está en proceso.';
+  if(status === 'Auditoría') return 'Revisar con auditor antes de mover.';
+  if(status === 'Bloqueado') return 'No surtir. Revisar bloqueo/calidad.';
+  return 'Revisar información en MiniWMS maestro.';
+}
+
 function isSpecialRack(id){
   return SPECIAL_RACKS.includes(id);
 }
@@ -443,22 +434,6 @@ function getAllInventoryByLocal(local){
 
 function getInventoryByRack(rackId){
   return inventoryData.filter(i => i.local.startsWith(rackId + '-'));
-}
-
-function getStatusColor(status){
-  if(status === 'Disponible') return '#55efc4';
-  if(status === 'Picking') return '#f39c12';
-  if(status === 'Auditoría') return '#9b59b6';
-  if(status === 'Bloqueado') return '#e74c3c';
-  return '#4fc3f7';
-}
-
-function getSuggestedAction(status){
-  if(status === 'Disponible') return 'Disponible para surtido o validación.';
-  if(status === 'Picking') return 'Validar si ya fue solicitado o está en proceso.';
-  if(status === 'Auditoría') return 'Revisar con auditor antes de mover.';
-  if(status === 'Bloqueado') return 'No surtir. Revisar bloqueo/calidad.';
-  return 'Revisar información en MiniWMS maestro.';
 }
 
 function frameColor(ratio, rackId){
@@ -492,12 +467,9 @@ function localPanelColor(){
   return isHolo() ? '#4fc3f7' : '#0e1e38';
 }
 
-function makePickable(el, action, meta){
-  el.setAttribute('class', (el.getAttribute('class') || '') + ' pickable');
-
+function makePickable(el, action){
   el.addEventListener('loaded', function(){
     el.object3D.userData.pickAction = action;
-    el.object3D.userData.pickMeta = meta || {};
   });
 
   el.addEventListener('click', function(e){
@@ -506,190 +478,13 @@ function makePickable(el, action, meta){
       e.preventDefault();
       return;
     }
+
     e.stopPropagation();
     action();
   });
 
   pickableEls.push(el);
   return el;
-}
-
-function openCSVPicker(){
-  document.getElementById('csvInput').value = '';
-  document.getElementById('csvInput').click();
-}
-
-function handleCSVFile(event){
-  const file = event.target.files && event.target.files[0];
-
-  if(!file){
-    return;
-  }
-
-  const reader = new FileReader();
-
-  reader.onload = function(e){
-    try{
-      const text = e.target.result;
-      const parsed = parseCSVInventory(text);
-
-      if(!parsed.rows.length){
-        updateInfo('<b>Error CSV:</b> no encontré registros válidos.<br>Revisa columnas: NP, LOTE, LOCAL, QTY, BOXES, STATUS.');
-        return;
-      }
-
-      inventoryData = parsed.rows;
-      dataSourceLabel = `Datos cargados desde CSV: ${file.name}`;
-      lastCSVSummary = buildCSVSummary(inventoryData, parsed.validation, file.name);
-
-      selectedRackId = null;
-      selectedLocalCode = null;
-      lastSearchResults = [];
-
-      buildWarehouse();
-      applyTransforms();
-
-      updateInfo(formatCSVSummary(lastCSVSummary, true));
-    }catch(err){
-      updateInfo(`<b>Error al leer CSV:</b><br>${err.message}`);
-    }
-  };
-
-  reader.onerror = function(){
-    updateInfo('<b>Error:</b> no pude leer el archivo CSV.');
-  };
-
-  reader.readAsText(file, 'UTF-8');
-}
-
-function parseCSVInventory(text){
-  const clean = String(text || '').replace(/^\uFEFF/, '');
-  const lines = clean.split(/\r?\n/).filter(line => line.trim() !== '');
-
-  if(lines.length < 2){
-    throw new Error('El CSV no tiene filas suficientes.');
-  }
-
-  const headers = parseCSVLine(lines[0]).map(normalizeHeader);
-
-  const idxNP = findHeaderIndex(headers, ['NP','ITEM','PARTNUMBER','PARTNO','MATERIAL']);
-  const idxLot = findHeaderIndex(headers, ['LOTE','LOT','LOTSERIAL','LOTSERIALNUMBER','LOTNUMBER','SERIAL']);
-  const idxLocal = findHeaderIndex(headers, ['LOCAL','LOCATION','LOCACION','UBICACION','RACKLOCAL','BIN']);
-  const idxQty = findHeaderIndex(headers, ['QTY','QUANTITY','CANTIDAD','PCS']);
-  const idxBoxes = findHeaderIndex(headers, ['BOXES','BOX','CAJAS']);
-  const idxStatus = findHeaderIndex(headers, ['STATUS','ESTADO','LOTSTATUS','ESTATUS']);
-
-  const missing = [];
-  if(idxNP < 0) missing.push('NP');
-  if(idxLot < 0) missing.push('LOTE');
-  if(idxLocal < 0) missing.push('LOCAL');
-
-  if(missing.length){
-    throw new Error('Faltan columnas obligatorias: ' + missing.join(', '));
-  }
-
-  const rows = [];
-  const validation = {
-    invalidLocals: [],
-    duplicateLocals: [],
-    skippedRows: 0,
-    warnings: []
-  };
-
-  const localCounter = new Map();
-
-  for(let i=1; i<lines.length; i++){
-    const cols = parseCSVLine(lines[i]);
-
-    const np = String(cols[idxNP] || '').trim().toUpperCase();
-    const lot = String(cols[idxLot] || '').trim().toUpperCase();
-    const local = normalizeLocal(cols[idxLocal]);
-
-    if(!np || !lot || !local){
-      validation.skippedRows++;
-      continue;
-    }
-
-    const record = {
-      np,
-      lot,
-      local,
-      qty:idxQty >= 0 ? toNumber(cols[idxQty]) : 0,
-      boxes:idxBoxes >= 0 ? toNumber(cols[idxBoxes]) : 0,
-      status:idxStatus >= 0 ? normalizeStatus(cols[idxStatus]) : 'Disponible'
-    };
-
-    rows.push(record);
-    localCounter.set(local, (localCounter.get(local) || 0) + 1);
-  }
-
-  const validLocals = getAllLayoutLocals();
-
-  rows.forEach(r => {
-    if(!validLocals.has(r.local)){
-      validation.invalidLocals.push(r.local);
-    }
-  });
-
-  localCounter.forEach((count, local) => {
-    if(count > 1){
-      validation.duplicateLocals.push({local, count});
-    }
-  });
-
-  validation.invalidLocals = [...new Set(validation.invalidLocals)];
-
-  return {rows, validation};
-}
-
-function parseCSVLine(line){
-  const result = [];
-  let current = '';
-  let insideQuotes = false;
-
-  for(let i=0; i<line.length; i++){
-    const char = line[i];
-    const next = line[i+1];
-
-    if(char === '"' && insideQuotes && next === '"'){
-      current += '"';
-      i++;
-      continue;
-    }
-
-    if(char === '"'){
-      insideQuotes = !insideQuotes;
-      continue;
-    }
-
-    if(char === ',' && !insideQuotes){
-      result.push(current.trim());
-      current = '';
-      continue;
-    }
-
-    current += char;
-  }
-
-  result.push(current.trim());
-  return result;
-}
-
-function findHeaderIndex(headers, options){
-  return headers.findIndex(h => options.includes(h));
-}
-
-function normalizeLocal(value){
-  return String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g,'')
-    .replace(/[–—]/g,'-');
-}
-
-function toNumber(value){
-  const n = Number(String(value || '').replace(/,/g,'').trim());
-  return Number.isFinite(n) ? n : 0;
 }
 
 function getAllLayoutLocals(){
@@ -706,160 +501,6 @@ function getAllLayoutLocals(){
   return set;
 }
 
-function buildCSVSummary(rows, validation, fileName){
-  const npSet = new Set();
-  const lotSet = new Set();
-  let qtyTotal = 0;
-  let boxesTotal = 0;
-
-  const statusCount = {
-    Disponible: 0,
-    Picking: 0,
-    Auditoría: 0,
-    Bloqueado: 0
-  };
-
-  rows.forEach(r => {
-    npSet.add(r.np);
-    lotSet.add(r.lot);
-    qtyTotal += Number(r.qty || 0);
-    boxesTotal += Number(r.boxes || 0);
-    statusCount[r.status] = (statusCount[r.status] || 0) + 1;
-  });
-
-  return {
-    fileName: fileName || 'Datos demo',
-    rows: rows.length,
-    uniqueNP: npSet.size,
-    uniqueLots: lotSet.size,
-    qtyTotal,
-    boxesTotal,
-    statusCount,
-    invalidLocals: validation.invalidLocals || [],
-    duplicateLocals: validation.duplicateLocals || [],
-    skippedRows: validation.skippedRows || 0,
-    source: dataSourceLabel
-  };
-}
-
-function formatCSVSummary(summary, loadedNow=false){
-  if(!summary){
-    return '<b>Resumen CSV:</b><br>No hay resumen disponible. Carga un CSV o restaura datos demo.';
-  }
-
-  const invalid = summary.invalidLocals.length
-    ? `<br><span class="err"><b>Locales no encontrados:</b> ${summary.invalidLocals.slice(0,8).join(', ')}${summary.invalidLocals.length>8?'...':''}</span>`
-    : '<br><span class="oktext"><b>Locales:</b> todos coinciden con el layout.</span>';
-
-  const dup = summary.duplicateLocals.length
-    ? `<br><span class="warn"><b>Duplicados por local:</b> ${summary.duplicateLocals.slice(0,6).map(d=>`${d.local}(${d.count})`).join(', ')}${summary.duplicateLocals.length>6?'...':''}</span>`
-    : '<br><span class="oktext"><b>Duplicados:</b> no detectados.</span>';
-
-  const skipped = summary.skippedRows
-    ? `<br><span class="warn"><b>Filas omitidas:</b> ${summary.skippedRows}</span>`
-    : '';
-
-  return (
-    `${loadedNow ? '<b>CSV cargado correctamente.</b>' : '<b>Resumen CSV / Datos activos</b>'}<br>` +
-    `Archivo/Fuente: <b>${summary.fileName}</b><br>` +
-    `Registros: <b>${summary.rows}</b> · NP únicos: <b>${summary.uniqueNP}</b> · Lotes únicos: <b>${summary.uniqueLots}</b><br>` +
-    `Qty total: <b>${summary.qtyTotal}</b> · Boxes total: <b>${summary.boxesTotal}</b><br>` +
-    `Disponible: <b style="color:${getStatusColor('Disponible')}">${summary.statusCount.Disponible || 0}</b> · ` +
-    `Picking: <b style="color:${getStatusColor('Picking')}">${summary.statusCount.Picking || 0}</b> · ` +
-    `Auditoría: <b style="color:${getStatusColor('Auditoría')}">${summary.statusCount.Auditoría || 0}</b> · ` +
-    `Bloqueado: <b style="color:${getStatusColor('Bloqueado')}">${summary.statusCount.Bloqueado || 0}</b>` +
-    invalid +
-    dup +
-    skipped
-  );
-}
-
-function showCSVSummary(){
-  if(!lastCSVSummary){
-    lastCSVSummary = buildCSVSummary(inventoryData, {
-      invalidLocals: validateInvalidLocals(inventoryData),
-      duplicateLocals: validateDuplicateLocals(inventoryData),
-      skippedRows: 0
-    }, dataSourceLabel);
-  }
-
-  updateInfo(formatCSVSummary(lastCSVSummary, false));
-}
-
-function validateInvalidLocals(rows){
-  const validLocals = getAllLayoutLocals();
-  const invalid = rows.filter(r => !validLocals.has(r.local)).map(r => r.local);
-  return [...new Set(invalid)];
-}
-
-function validateDuplicateLocals(rows){
-  const counter = new Map();
-
-  rows.forEach(r => {
-    counter.set(r.local, (counter.get(r.local) || 0) + 1);
-  });
-
-  const dup = [];
-  counter.forEach((count, local) => {
-    if(count > 1) dup.push({local, count});
-  });
-
-  return dup;
-}function downloadCSVTemplate(){
-  const csv = [
-    ['NP','LOTE','LOCAL','QTY','BOXES','STATUS'],
-    ['98A1850','L2401-A','RC07-3-05','27000','3','Disponible'],
-    ['100506046','L2503-X','RC10-2-04','12000','4','Disponible'],
-    ['D3301','L2501-D','RC05-3-08','7500','5','Bloqueado'],
-    ['70CR','L2510-R','RC16-2-06','4800','8','Disponible']
-  ].map(row => row.map(csvEscape).join(',')).join('\n');
-
-  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-
-  a.href = url;
-  a.download = 'MiniWMS_AR_Template.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  setTimeout(() => URL.revokeObjectURL(url), 500);
-
-  updateInfo('<b>Plantilla CSV generada.</b><br>Descarga: <b>MiniWMS_AR_Template.csv</b><br>Columnas: NP, LOTE, LOCAL, QTY, BOXES, STATUS.');
-}
-
-function csvEscape(value){
-  const s = String(value ?? '');
-  if(/[",\n\r]/.test(s)){
-    return '"' + s.replace(/"/g,'""') + '"';
-  }
-  return s;
-}
-
-function restoreDemoData(){
-  inventoryData = cloneInventory(DEMO_INVENTORY);
-  dataSourceLabel = 'Datos demo activos';
-  selectedRackId = null;
-  selectedLocalCode = null;
-  lastSearchResults = [];
-
-  lastCSVSummary = buildCSVSummary(inventoryData, {
-    invalidLocals: validateInvalidLocals(inventoryData),
-    duplicateLocals: validateDuplicateLocals(inventoryData),
-    skippedRows: 0
-  }, 'Datos demo');
-
-  buildWarehouse();
-  applyTransforms();
-
-  updateInfo(
-    `<b>Datos demo restaurados.</b><br>` +
-    `Registros demo: <b>${inventoryData.length}</b><br>` +
-    `Prueba: 98A1850, L2401-A, RC07-3-05, 70CR.`
-  );
-}
-
 function buildWarehouse(){
   const w = document.getElementById('warehouse');
   w.innerHTML = '';
@@ -870,23 +511,18 @@ function buildWarehouse(){
   buildFloor(w);
   buildGrid(w);
   buildPerimeter(w);
-  buildMainAisles(w);
-  buildFlowLanes(w);
-  buildZoneBlocks(w);
-  buildDockDoors(w);
-  buildReceivingArea(w);
-  buildAuditArea(w);
-  buildPackingArea(w);
-  buildStagingArea(w);
+  buildAisles(w);
+  buildZones(w);
+  buildDocks(w);
+  buildProcessAreas(w);
   buildColumns(w);
-  buildForkliftPath(w);
 
   RACKS.forEach(r => buildRack(w, r));
 
   buildRoute(w);
 
   w.appendChild(E('a-text', {
-    value:'MiniWMS AR · V9.1 CSV Validado',
+    value:'MiniWMS AR · V10.0 Control Tower',
     position:'-10.4 0.16 -6.85',
     rotation:'-90 0 0',
     color:'#4fc3f7',
@@ -919,11 +555,11 @@ function buildFloor(parent){
 }
 
 function buildGrid(parent){
-  const gridGroup = E('a-entity', {id:'gridGroup'});
-  parent.appendChild(gridGroup);
+  const g = E('a-entity', {id:'gridGroup'});
+  parent.appendChild(g);
 
   for(let x=-12; x<=8; x+=1){
-    gridGroup.appendChild(E('a-box', {
+    g.appendChild(E('a-box', {
       position:`${x} 0.046 0`,
       width:'0.010',
       height:'0.010',
@@ -935,7 +571,7 @@ function buildGrid(parent){
   }
 
   for(let z=-7; z<=7; z+=1){
-    gridGroup.appendChild(E('a-box', {
+    g.appendChild(E('a-box', {
       position:`-2.2 0.047 ${z}`,
       width:'19.8',
       height:'0.010',
@@ -950,9 +586,9 @@ function buildGrid(parent){
 function buildPerimeter(parent){
   [
     {x:-2.2,z:-7.15,w:20.2,d:0.07},
-    {x:-2.2,z: 7.15,w:20.2,d:0.07},
+    {x:-2.2,z:7.15,w:20.2,d:0.07},
     {x:-12.3,z:0,w:0.07,d:14.3},
-    {x: 7.9,z:0,w:0.07,d:14.3}
+    {x:7.9,z:0,w:0.07,d:14.3}
   ].forEach(b => {
     parent.appendChild(E('a-box', {
       position:`${b.x} 0.075 ${b.z}`,
@@ -966,10 +602,10 @@ function buildPerimeter(parent){
   });
 }
 
-function buildMainAisles(parent){
+function buildAisles(parent){
   [
     {x:-2.4,z:-1.9,w:19.4,d:0.50,color:'#f39c12',op:.25},
-    {x:-2.4,z: 2.05,w:19.4,d:0.50,color:'#f39c12',op:.25},
+    {x:-2.4,z:2.05,w:19.4,d:0.50,color:'#f39c12',op:.25},
     {x:-10.65,z:0,w:0.38,d:13.0,color:'#4fc3f7',op:.15},
     {x:6.35,z:0,w:0.42,d:13.0,color:'#4fc3f7',op:.15},
     {x:-0.95,z:0,w:0.35,d:13.0,color:'#55efc4',op:.12}
@@ -986,43 +622,7 @@ function buildMainAisles(parent){
   });
 }
 
-function buildFlowLanes(parent){
-  for(let x=-11.0; x<=7.0; x+=1.2){
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.096 -6.20`,
-      width:'0.55',
-      height:'0.022',
-      depth:'0.055',
-      color:'#f1c40f',
-      opacity:'0.55',
-      transparent:'true'
-    }));
-
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.096 6.15`,
-      width:'0.55',
-      height:'0.022',
-      depth:'0.055',
-      color:'#f1c40f',
-      opacity:'0.55',
-      transparent:'true'
-    }));
-  }
-
-  for(let z=-5.6; z<=5.6; z+=1.2){
-    parent.appendChild(E('a-box', {
-      position:`6.35 0.098 ${z}`,
-      width:'0.055',
-      height:'0.022',
-      depth:'0.55',
-      color:'#f1c40f',
-      opacity:'0.42',
-      transparent:'true'
-    }));
-  }
-}
-
-function buildZoneBlocks(parent){
+function buildZones(parent){
   addZone(parent,'RECIBO',-9.5,6.45,3.7,0.82,'#55efc4');
   addZone(parent,'AUDITORIA',-4.8,6.45,3.6,0.82,'#9b59b6');
   addZone(parent,'SURTIDO',-7.3,-6.45,4.5,0.82,'#f39c12');
@@ -1051,7 +651,7 @@ function addZone(parent,label,x,z,w,d,color){
   }));
 }
 
-function buildDockDoors(parent){
+function buildDocks(parent){
   for(let i=0;i<5;i++){
     const x = 2.45 + i*0.95;
 
@@ -1065,16 +665,6 @@ function buildDockDoors(parent){
       transparent:'true'
     }));
 
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.40 7.02`,
-      width:'0.62',
-      height:'0.32',
-      depth:'0.12',
-      color:'#4fc3f7',
-      opacity:'0.34',
-      transparent:'true'
-    }));
-
     parent.appendChild(E('a-text', {
       value:`D${i+1}`,
       position:`${x-0.15} 0.62 6.72`,
@@ -1085,12 +675,10 @@ function buildDockDoors(parent){
   }
 }
 
-function buildReceivingArea(parent){
+function buildProcessAreas(parent){
   for(let i=0;i<4;i++){
-    const x = -10.3 + i*0.92;
-
     parent.appendChild(E('a-box', {
-      position:`${x} 0.115 5.70`,
+      position:`${-10.3 + i*0.92} 0.115 5.70`,
       width:'0.70',
       height:'0.09',
       depth:'0.42',
@@ -1099,14 +687,10 @@ function buildReceivingArea(parent){
       transparent:'true'
     }));
   }
-}
 
-function buildAuditArea(parent){
   for(let i=0;i<3;i++){
-    const x = -5.1 + i*0.85;
-
     parent.appendChild(E('a-box', {
-      position:`${x} 0.12 5.66`,
+      position:`${-5.1 + i*0.85} 0.12 5.66`,
       width:'0.62',
       height:'0.10',
       depth:'0.40',
@@ -1115,14 +699,10 @@ function buildAuditArea(parent){
       transparent:'true'
     }));
   }
-}
 
-function buildPackingArea(parent){
   for(let i=0;i<4;i++){
-    const x = 0.1 + i*0.85;
-
     parent.appendChild(E('a-box', {
-      position:`${x} 0.15 -5.85`,
+      position:`${0.1 + i*0.85} 0.15 -5.85`,
       width:'0.68',
       height:'0.10',
       depth:'0.42',
@@ -1130,25 +710,11 @@ function buildPackingArea(parent){
       opacity:'0.45',
       transparent:'true'
     }));
-
-    parent.appendChild(E('a-box', {
-      position:`${x} 0.075 -5.85`,
-      width:'0.58',
-      height:'0.10',
-      depth:'0.32',
-      color:'#5f7284',
-      opacity:'0.70',
-      transparent:'true'
-    }));
   }
-}
 
-function buildStagingArea(parent){
   for(let i=0;i<5;i++){
-    const x = -0.8 + i*0.65;
-
     parent.appendChild(E('a-box', {
-      position:`${x} 0.095 5.68`,
+      position:`${-0.8 + i*0.65} 0.095 5.68`,
       width:'0.42',
       height:'0.06',
       depth:'0.42',
@@ -1161,9 +727,9 @@ function buildStagingArea(parent){
 
 function buildColumns(parent){
   const cols = [
-    [-10.0,-5.0],[-7.1,-5.0],[-4.3,-5.0],[-1.0,-5.0],[2.0,-5.0],[5.0,-5.0],
-    [-10.0, 0.0],[-7.1, 0.0],[-4.3, 0.0],[-1.0, 0.0],[2.0, 0.0],[5.0, 0.0],
-    [-10.0, 5.0],[-7.1, 5.0],[-4.3, 5.0],[-1.0, 5.0],[2.0, 5.0],[5.0, 5.0]
+    [-10,-5],[-7.1,-5],[-4.3,-5],[-1,-5],[2,-5],[5,-5],
+    [-10,0],[-7.1,0],[-4.3,0],[-1,0],[2,0],[5,0],
+    [-10,5],[-7.1,5],[-4.3,5],[-1,5],[2,5],[5,5]
   ];
 
   cols.forEach(([x,z]) => {
@@ -1178,32 +744,6 @@ function buildColumns(parent){
   });
 }
 
-function buildForkliftPath(parent){
-  const path = E('a-entity', {id:'forkliftPath'});
-  parent.appendChild(path);
-
-  [
-    {x:-10.65,z:-3.8,d:2.4},
-    {x:-10.65,z:0,d:2.4},
-    {x:-10.65,z:4.3,d:2.4},
-    {x:6.35,z:-3.8,d:2.4},
-    {x:6.35,z:0,d:2.4},
-    {x:6.35,z:4.3,d:2.4},
-    {x:-0.95,z:-1.9,d:3.8},
-    {x:-0.95,z:2.05,d:3.8}
-  ].forEach(p => {
-    path.appendChild(E('a-box', {
-      position:`${p.x} 0.105 ${p.z}`,
-      width:'0.12',
-      height:'0.022',
-      depth:String(p.d),
-      color:'#55efc4',
-      opacity:'0.17',
-      transparent:'true'
-    }));
-  });
-}
-
 function buildRack(parent,rack){
   const group = E('a-entity', {
     id:rack.id,
@@ -1213,8 +753,7 @@ function buildRack(parent,rack){
 
   const ratio = rack.occ / rack.cap;
   const width = rack.bays * 0.265;
-  const baseDepth = rack.depthType === 'DOUBLE' ? 1.12 : 0.82;
-  const depth = baseDepth;
+  const depth = rack.depthType === 'DOUBLE' ? 1.12 : 0.82;
   const levelGap = 0.285;
   const height = rack.levels * levelGap + 0.08;
   const fColor = frameColor(ratio, rack.id);
@@ -1244,7 +783,7 @@ function buildRack(parent,rack){
 
   if(specialVisible && special){
     group.appendChild(E('a-ring', {
-      position:`0 0.075 0`,
+      position:'0 0.075 0',
       rotation:'-90 0 0',
       radiusInner:String(Math.max(width, depth) * 0.52),
       radiusOuter:String(Math.max(width, depth) * 0.67),
@@ -1269,7 +808,7 @@ function buildRack(parent,rack){
         transparent:'true'
       });
 
-      makePickable(post, function(){ highlightRack(rack.id); }, {type:'rack', rackId:rack.id});
+      makePickable(post, () => highlightRack(rack.id));
       group.appendChild(post);
     });
 
@@ -1300,21 +839,9 @@ function buildRack(parent,rack){
         transparent:'true'
       });
 
-      makePickable(beam, function(){ highlightRack(rack.id); }, {type:'rack', rackId:rack.id});
+      makePickable(beam, () => highlightRack(rack.id));
       group.appendChild(beam);
     });
-
-    if(rack.depthType === 'DOUBLE'){
-      group.appendChild(E('a-box', {
-        position:`0 ${y} 0`,
-        width:String(width + 0.05),
-        height:'0.020',
-        depth:'0.030',
-        color:'#f1c40f',
-        opacity:'0.45',
-        transparent:'true'
-      }));
-    }
   }
 
   let occupiedLeft = rack.occ;
@@ -1324,13 +851,12 @@ function buildRack(parent,rack){
     for(let bay=1; bay<=rack.bays; bay++){
       const localX = -width/2 + (bay - 0.5)*(width/rack.bays);
       const cellY = (lv - 0.5)*levelGap + 0.06;
-      const frontZ = -depth/2 - 0.02;
       const localCode = `${rack.id}-${lv}-${String(bay).padStart(2,'0')}`;
       const inv = getInventoryByLocal(localCode);
 
       if(highDetail){
         const localPanel = E('a-box', {
-          position:`${localX} ${cellY} ${frontZ}`,
+          position:`${localX} ${cellY} ${-depth/2 - 0.02}`,
           width:String((width/rack.bays)-0.035),
           height:'0.17',
           depth:'0.035',
@@ -1339,7 +865,7 @@ function buildRack(parent,rack){
           transparent:'true'
         });
 
-        makePickable(localPanel, function(){ highlightLocal(localCode); }, {type:'local', rackId:rack.id, localCode});
+        makePickable(localPanel, () => highlightLocal(localCode));
         group.appendChild(localPanel);
       }
 
@@ -1360,7 +886,7 @@ function buildRack(parent,rack){
           transparent:'true'
         });
 
-        makePickable(palletBox, function(){ highlightLocal(localCode); }, {type:'local', rackId:rack.id, localCode});
+        makePickable(palletBox, () => highlightLocal(localCode));
         group.appendChild(palletBox);
       }
 
@@ -1420,6 +946,482 @@ function buildRoute(parent){
   }
 }
 
+function openCSVPicker(){
+  document.getElementById('csvInput').value = '';
+  document.getElementById('csvInput').click();
+}
+
+function handleCSVFile(event){
+  const file = event.target.files && event.target.files[0];
+
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    try{
+      const parsed = parseCSVInventory(e.target.result);
+
+      if(!parsed.rows.length){
+        updateInfo('<b>Error CSV:</b> no encontré registros válidos.<br>Revisa columnas: NP, LOTE, LOCAL, QTY, BOXES, STATUS.');
+        return;
+      }
+
+      inventoryData = parsed.rows;
+      dataSourceLabel = `Datos cargados desde CSV: ${file.name}`;
+      lastCSVSummary = buildCSVSummary(inventoryData, parsed.validation, file.name);
+
+      selectedRackId = null;
+      selectedLocalCode = null;
+      lastSearchResults = [];
+
+      buildWarehouse();
+      applyTransforms();
+
+      updateInfo(formatCSVSummary(lastCSVSummary, true));
+    }catch(err){
+      updateInfo(`<b>Error al leer CSV:</b><br>${err.message}`);
+    }
+  };
+
+  reader.onerror = function(){
+    updateInfo('<b>Error:</b> no pude leer el archivo CSV.');
+  };
+
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSVInventory(text){
+  const clean = String(text || '').replace(/^\uFEFF/, '');
+  const lines = clean.split(/\r?\n/).filter(line => line.trim() !== '');
+
+  if(lines.length < 2){
+    throw new Error('El CSV no tiene filas suficientes.');
+  }
+
+  const headers = parseCSVLine(lines[0]).map(normalizeHeader);
+
+  const idxNP = findHeaderIndex(headers, ['NP','ITEM','PARTNUMBER','PARTNO','MATERIAL']);
+  const idxLot = findHeaderIndex(headers, ['LOTE','LOT','LOTSERIAL','LOTSERIALNUMBER','LOTNUMBER','SERIAL']);
+  const idxLocal = findHeaderIndex(headers, ['LOCAL','LOCATION','LOCACION','UBICACION','RACKLOCAL','BIN']);
+  const idxQty = findHeaderIndex(headers, ['QTY','QUANTITY','CANTIDAD','PCS']);
+  const idxBoxes = findHeaderIndex(headers, ['BOXES','BOX','CAJAS']);
+  const idxStatus = findHeaderIndex(headers, ['STATUS','ESTADO','LOTSTATUS','ESTATUS']);
+
+  const missing = [];
+  if(idxNP < 0) missing.push('NP');
+  if(idxLot < 0) missing.push('LOTE');
+  if(idxLocal < 0) missing.push('LOCAL');
+
+  if(missing.length){
+    throw new Error('Faltan columnas obligatorias: ' + missing.join(', '));
+  }
+
+  const rows = [];
+  const validation = {
+    invalidLocals: [],
+    skippedRows: 0
+  };
+
+  const validLocals = getAllLayoutLocals();
+
+  for(let i=1; i<lines.length; i++){
+    const cols = parseCSVLine(lines[i]);
+
+    const np = String(cols[idxNP] || '').trim().toUpperCase();
+    const lot = String(cols[idxLot] || '').trim().toUpperCase();
+    const local = normalizeLocal(cols[idxLocal]);
+
+    if(!np || !lot || !local){
+      validation.skippedRows++;
+      continue;
+    }
+
+    const record = {
+      np,
+      lot,
+      local,
+      qty:idxQty >= 0 ? toNumber(cols[idxQty]) : 0,
+      boxes:idxBoxes >= 0 ? toNumber(cols[idxBoxes]) : 0,
+      status:idxStatus >= 0 ? normalizeStatus(cols[idxStatus]) : 'Disponible'
+    };
+
+    rows.push(record);
+
+    if(!validLocals.has(local)){
+      validation.invalidLocals.push(local);
+    }
+  }
+
+  validation.invalidLocals = [...new Set(validation.invalidLocals)];
+
+  return {rows, validation};
+}
+
+function parseCSVLine(line){
+  const result = [];
+  let current = '';
+  let insideQuotes = false;
+
+  for(let i=0; i<line.length; i++){
+    const char = line[i];
+    const next = line[i+1];
+
+    if(char === '"' && insideQuotes && next === '"'){
+      current += '"';
+      i++;
+      continue;
+    }
+
+    if(char === '"'){
+      insideQuotes = !insideQuotes;
+      continue;
+    }
+
+    if(char === ',' && !insideQuotes){
+      result.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  result.push(current.trim());
+  return result;
+}
+
+function findHeaderIndex(headers, options){
+  return headers.findIndex(h => options.includes(h));
+}
+
+function normalizeLocal(value){
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g,'')
+    .replace(/[–—]/g,'-');
+}
+
+function toNumber(value){
+  const n = Number(String(value || '').replace(/,/g,'').trim());
+  return Number.isFinite(n) ? n : 0;
+}
+
+function buildCSVSummary(rows, validation, fileName){
+  const npSet = new Set();
+  const lotSet = new Set();
+  let qtyTotal = 0;
+  let boxesTotal = 0;
+
+  const statusCount = {
+    Disponible: 0,
+    Picking: 0,
+    Auditoría: 0,
+    Bloqueado: 0
+  };
+
+  rows.forEach(r => {
+    npSet.add(r.np);
+    lotSet.add(r.lot);
+    qtyTotal += Number(r.qty || 0);
+    boxesTotal += Number(r.boxes || 0);
+    statusCount[r.status] = (statusCount[r.status] || 0) + 1;
+  });
+
+  return {
+    fileName: fileName || 'Datos demo',
+    rows: rows.length,
+    uniqueNP: npSet.size,
+    uniqueLots: lotSet.size,
+    qtyTotal,
+    boxesTotal,
+    statusCount,
+    invalidLocals: validation.invalidLocals || [],
+    skippedRows: validation.skippedRows || 0,
+    source: dataSourceLabel
+  };
+}
+
+function formatCSVSummary(summary, loadedNow=false){
+  if(!summary){
+    return '<b>Resumen CSV:</b><br>No hay resumen disponible.';
+  }
+
+  const invalid = summary.invalidLocals.length
+    ? `<br><span class="err"><b>Ubicaciones fuera del layout:</b> ${summary.invalidLocals.slice(0,8).join(', ')}${summary.invalidLocals.length>8?'...':''}</span>`
+    : '<br><span class="oktext"><b>Ubicaciones:</b> todas coinciden con el layout.</span>';
+
+  const skipped = summary.skippedRows
+    ? `<br><span class="warn"><b>Filas omitidas:</b> ${summary.skippedRows}</span>`
+    : '';
+
+  return (
+    `${loadedNow ? '<b>CSV cargado correctamente.</b>' : '<b>Resumen CSV / Datos activos</b>'}<br>` +
+    `Archivo/Fuente: <b>${summary.fileName}</b><br>` +
+    `Registros: <b>${summary.rows}</b> · NP únicos: <b>${summary.uniqueNP}</b> · Lotes únicos: <b>${summary.uniqueLots}</b><br>` +
+    `Qty total: <b>${summary.qtyTotal}</b> · Boxes total: <b>${summary.boxesTotal}</b><br>` +
+    `Disponible: <b style="color:${getStatusColor('Disponible')}">${summary.statusCount.Disponible || 0}</b> · ` +
+    `Picking: <b style="color:${getStatusColor('Picking')}">${summary.statusCount.Picking || 0}</b> · ` +
+    `Auditoría: <b style="color:${getStatusColor('Auditoría')}">${summary.statusCount.Auditoría || 0}</b> · ` +
+    `Bloqueado: <b style="color:${getStatusColor('Bloqueado')}">${summary.statusCount.Bloqueado || 0}</b>` +
+    invalid +
+    skipped
+  );
+}
+
+function showCSVSummary(){
+  if(!lastCSVSummary){
+    lastCSVSummary = buildCSVSummary(inventoryData, {
+      invalidLocals: validateInvalidLocals(inventoryData),
+      skippedRows: 0
+    }, dataSourceLabel);
+  }
+
+  updateInfo(formatCSVSummary(lastCSVSummary, false));
+}
+
+function validateInvalidLocals(rows){
+  const validLocals = getAllLayoutLocals();
+  const invalid = rows.filter(r => !validLocals.has(r.local)).map(r => r.local);
+  return [...new Set(invalid)];
+}
+
+function downloadCSVTemplate(){
+  const csv = [
+    ['NP','LOTE','LOCAL','QTY','BOXES','STATUS'],
+    ['98A1850','L2401-A','RC07-3-05','27000','3','Disponible'],
+    ['100506046','L2503-X','RC10-2-04','12000','4','Disponible'],
+    ['D3301','L2501-D','RC05-3-08','7500','5','Bloqueado'],
+    ['70CR','L2510-R','RC16-2-06','4800','8','Disponible']
+  ].map(row => row.map(csvEscape).join(',')).join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = 'MiniWMS_AR_Template.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+
+  updateInfo('<b>Plantilla CSV generada.</b><br>Descarga: <b>MiniWMS_AR_Template.csv</b>');
+}
+
+function csvEscape(value){
+  const s = String(value ?? '');
+  if(/[",\n\r]/.test(s)){
+    return '"' + s.replace(/"/g,'""') + '"';
+  }
+  return s;
+}
+
+function restoreDemoData(){
+  inventoryData = cloneInventory(DEMO_INVENTORY);
+  dataSourceLabel = 'Datos demo activos';
+  selectedRackId = null;
+  selectedLocalCode = null;
+  lastSearchResults = [];
+
+  lastCSVSummary = buildCSVSummary(inventoryData, {
+    invalidLocals: validateInvalidLocals(inventoryData),
+    skippedRows: 0
+  }, 'Datos demo');
+
+  buildWarehouse();
+  applyTransforms();
+
+  updateInfo(
+    `<b>Datos demo restaurados.</b><br>` +
+    `Registros demo: <b>${inventoryData.length}</b><br>` +
+    `Prueba: 98A1850, L2401-A, RC07-3-05, 70CR.`
+  );
+}
+
+function getControlTowerMetrics(){
+  const validLocals = getAllLayoutLocals();
+
+  const npSet = new Set();
+  const lotSet = new Set();
+
+  let totalQty = 0;
+  let totalBoxes = 0;
+
+  let auditQty = 0;
+  let auditBoxes = 0;
+  let blockedQty = 0;
+  let blockedBoxes = 0;
+
+  const statusCount = {
+    Disponible: 0,
+    Picking: 0,
+    Auditoría: 0,
+    Bloqueado: 0
+  };
+
+  const invalidLocationRecords = [];
+  const attentionRecords = [];
+
+  inventoryData.forEach(item => {
+    npSet.add(item.np);
+    lotSet.add(item.lot);
+
+    totalQty += Number(item.qty || 0);
+    totalBoxes += Number(item.boxes || 0);
+
+    if(statusCount[item.status] === undefined){
+      statusCount[item.status] = 0;
+    }
+
+    statusCount[item.status]++;
+
+    const invalidLocal = !validLocals.has(item.local);
+
+    if(item.status === 'Auditoría'){
+      auditQty += Number(item.qty || 0);
+      auditBoxes += Number(item.boxes || 0);
+    }
+
+    if(item.status === 'Bloqueado'){
+      blockedQty += Number(item.qty || 0);
+      blockedBoxes += Number(item.boxes || 0);
+    }
+
+    if(invalidLocal){
+      invalidLocationRecords.push(item);
+    }
+
+    if(item.status === 'Auditoría' || item.status === 'Bloqueado' || invalidLocal){
+      attentionRecords.push(item);
+    }
+  });
+
+  const totalRecords = inventoryData.length;
+  const attentionPercent = totalRecords
+    ? Math.round((attentionRecords.length / totalRecords) * 100)
+    : 0;
+
+  return {
+    totalRecords,
+    uniqueNP: npSet.size,
+    uniqueLots: lotSet.size,
+    totalQty,
+    totalBoxes,
+    statusCount,
+    auditQty,
+    auditBoxes,
+    blockedQty,
+    blockedBoxes,
+    invalidLocationsCount: invalidLocationRecords.length,
+    invalidLocationRecords,
+    attentionRecords,
+    attentionPercent
+  };
+}
+
+function showControlTower(){
+  const metrics = getControlTowerMetrics();
+
+  clearHighlight(false);
+  buildControlTowerPins(metrics.attentionRecords);
+
+  const attentionColor = metrics.attentionPercent > 20 ? '#e74c3c' : metrics.attentionPercent > 8 ? '#f39c12' : '#55efc4';
+
+  const invalidList = metrics.invalidLocationRecords.length
+    ? `<br><span class="err">Fuera de layout: ${metrics.invalidLocationRecords.slice(0,5).map(x=>x.local).join(', ')}${metrics.invalidLocationRecords.length>5?'...':''}</span>`
+    : '';
+
+  updateInfo(
+    `<b>Control Tower AR</b><br>` +
+    `<span style="color:#7fb3e0">${dataSourceLabel}</span><br><br>` +
+
+    `<b>Resumen general</b><br>` +
+    `Registros cargados: <b>${metrics.totalRecords}</b><br>` +
+    `NP únicos: <b>${metrics.uniqueNP}</b> · Lotes únicos: <b>${metrics.uniqueLots}</b><br>` +
+    `Qty total: <b>${metrics.totalQty}</b> · Boxes total: <b>${metrics.totalBoxes}</b><br><br>` +
+
+    `<b>Estado operativo</b><br>` +
+    `Disponible: <b style="color:${getStatusColor('Disponible')}">${metrics.statusCount.Disponible}</b> · ` +
+    `Picking: <b style="color:${getStatusColor('Picking')}">${metrics.statusCount.Picking}</b><br>` +
+    `Auditoría: <b style="color:${getStatusColor('Auditoría')}">${metrics.statusCount.Auditoría}</b> · ` +
+    `Bloqueado: <b style="color:${getStatusColor('Bloqueado')}">${metrics.statusCount.Bloqueado}</b><br><br>` +
+
+    `<b>Inventario con condición de atención</b><br>` +
+    `Qty en auditoría: <b>${metrics.auditQty}</b> · Boxes: <b>${metrics.auditBoxes}</b><br>` +
+    `Qty bloqueada: <b>${metrics.blockedQty}</b> · Boxes: <b>${metrics.blockedBoxes}</b><br>` +
+    `Ubicaciones fuera del layout: <b class="${metrics.invalidLocationsCount ? 'err' : 'oktext'}">${metrics.invalidLocationsCount}</b>${invalidList}<br>` +
+    `Condición de atención: <b style="color:${attentionColor}">${metrics.attentionPercent}%</b><br><br>` +
+
+    `<span style="color:#7fb3e0">Vista AR: se resaltan registros con atención: auditoría, bloqueado o fuera de layout.</span>`
+  );
+}
+
+function buildControlTowerPins(records){
+  const w = document.getElementById('warehouse');
+  const old = document.getElementById('searchResultsGroup');
+
+  if(old){
+    old.parentNode.removeChild(old);
+  }
+
+  const group = E('a-entity', {id:'searchResultsGroup'});
+  w.appendChild(group);
+
+  if(!records.length){
+    return;
+  }
+
+  records.forEach((item, index) => {
+    const local = localMap.get(item.local);
+
+    if(!local){
+      return;
+    }
+
+    const rack = rackMap.get(local.rackId);
+
+    if(!rack){
+      return;
+    }
+
+    const validLocals = getAllLayoutLocals();
+    const isInvalid = !validLocals.has(item.local);
+    const color = isInvalid ? '#ff9999' : getStatusColor(item.status);
+
+    const x = rack.meta.x + local.x;
+    const y = local.y + 0.42;
+    const z = rack.meta.z + local.z;
+
+    group.appendChild(E('a-sphere', {
+      position:`${x} ${y} ${z}`,
+      radius:'0.14',
+      color,
+      opacity:'0.98',
+      animation__pulse:'property: scale; from: 1 1 1; to: 1.45 1.45 1.45; dir: alternate; dur: 600; loop: true'
+    }));
+
+    group.appendChild(E('a-cylinder', {
+      position:`${x} ${y-0.24} ${z}`,
+      radius:'0.026',
+      height:'0.44',
+      color,
+      opacity:'0.82',
+      transparent:'true'
+    }));
+
+    group.appendChild(E('a-text', {
+      value:String(index + 1),
+      position:`${x-0.055} ${y+0.18} ${z}`,
+      rotation:'-90 0 0',
+      color:'#ffffff',
+      width:'1.4'
+    }));
+  });
+}
+
 function buildResultPins(results){
   const w = document.getElementById('warehouse');
   const old = document.getElementById('searchResultsGroup');
@@ -1445,15 +1447,6 @@ function buildResultPins(results){
       color,
       opacity:'0.95',
       animation__pulse:'property: scale; from: 1 1 1; to: 1.4 1.4 1.4; dir: alternate; dur: 600; loop: true'
-    }));
-
-    group.appendChild(E('a-cylinder', {
-      position:`${x} ${y-0.22} ${z}`,
-      radius:'0.025',
-      height:'0.42',
-      color,
-      opacity:'0.80',
-      transparent:'true'
     }));
 
     group.appendChild(E('a-text', {
@@ -1604,19 +1597,10 @@ function highlightLocal(code, silent=false){
     opacity:'0.95'
   }));
 
-  h.appendChild(E('a-cylinder', {
-    position:`${worldX} ${worldY+0.20} ${worldZ}`,
-    radius:'0.025',
-    height:'0.40',
-    color,
-    opacity:'0.80',
-    transparent:'true'
-  }));
-
   if(!silent){
     if(inv){
       const multiNote = items.length > 1
-        ? `<br><span class="warn">Atención: este local tiene <b>${items.length}</b> registros cargados.</span>`
+        ? `<br><span class="warn">Nota: este local tiene <b>${items.length}</b> registros cargados. En esta operación puede ser válido.</span>`
         : '';
 
       updateInfo(
@@ -1698,8 +1682,7 @@ function searchTarget(){
       `<b>Búsqueda:</b> ${q}<br>` +
       `Resultados: <b>${hits.length}</b><br>` +
       rows +
-      `<br><br>Usa <b>Ruta resultado</b> para guiar visualmente hacia el primer resultado.<br>` +
-      `<span style="color:#7fb3e0">${dataSourceLabel}</span>`
+      `<br><br><span style="color:#7fb3e0">${dataSourceLabel}</span>`
     );
 
     return;
@@ -1708,36 +1691,12 @@ function searchTarget(){
   updateInfo(`No encontré: <b>${q}</b><br>Revisa CSV o prueba: 98A1850, L2401-A, RC07-3-05.`);
 }
 
-function showResultRoute(){
-  if(!lastSearchResults.length){
-    updateInfo('<b>Ruta resultado:</b> primero busca un NP, lote o local.');
-    return;
-  }
-
-  routeVisible = true;
-  const route = document.getElementById('routeGroup');
-  if(route) route.setAttribute('visible','true');
-
-  const first = lastSearchResults[0];
-  const local = localMap.get(first.local);
-  if(local){
-    highlightLocal(first.local);
-  }
-
-  updateInfo(
-    `<b>Ruta hacia resultado activa.</b><br>` +
-    `Primer objetivo: <b>${first.local}</b><br>` +
-    `NP: <b>${first.np}</b> · Lote: <b>${first.lot}</b><br>` +
-    `Estado: <b style="color:${getStatusColor(first.status)}">${first.status}</b>`
-  );
-}
-
 function toggleRoute(){
   routeVisible = !routeVisible;
   const route = document.getElementById('routeGroup');
   if(route) route.setAttribute('visible',routeVisible ? 'true' : 'false');
 
-  updateInfo(routeVisible ? '<b>Ruta pick activa.</b><br>Flujo visual: Recibo → Auditoría → Surtido → Packing → Embarque.' : '<b>Ruta pick oculta.</b>');
+  updateInfo(routeVisible ? '<b>Ruta pick activa.</b>' : '<b>Ruta pick oculta.</b>');
 }
 
 function toggleHeatmap(){
@@ -1761,7 +1720,7 @@ function toggleSpecialRacks(){
 
   updateInfo(
     specialVisible
-      ? '<b>Racks especiales activos.</b><br>RC05, RC10, RC14, RC16. RC16 se muestra como doble profundidad.'
+      ? '<b>Racks especiales activos.</b><br>RC05, RC10, RC14, RC16.'
       : '<b>Racks especiales ocultos.</b>'
   );
 }
@@ -2056,7 +2015,6 @@ function bindSafeTouchControls(){
 window.addEventListener('load', () => {
   lastCSVSummary = buildCSVSummary(inventoryData, {
     invalidLocals: validateInvalidLocals(inventoryData),
-    duplicateLocals: validateDuplicateLocals(inventoryData),
     skippedRows: 0
   }, 'Datos demo');
 
@@ -2070,7 +2028,7 @@ window.addEventListener('load', () => {
   marker.addEventListener('markerFound', () => {
     status.textContent = 'Marcador detectado';
     status.classList.add('ok');
-    updateInfo(`<b>Marcador detectado.</b><br>V9.1 CSV validado activo.<br><span style="color:#7fb3e0">${dataSourceLabel}</span>`);
+    updateInfo(`<b>Marcador detectado.</b><br>V10.0 Control Tower activo.<br><span style="color:#7fb3e0">${dataSourceLabel}</span>`);
   });
 
   marker.addEventListener('markerLost', () => {
